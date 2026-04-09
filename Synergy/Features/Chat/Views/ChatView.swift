@@ -198,8 +198,8 @@ struct ChatView: View {
                     ZStack {
                         Circle()
                             .fill(vm.messageText.isEmpty
-                                  ? Color.cosmicCard
-                                  : LinearGradient.cosmicGradient)
+                                  ? AnyShapeStyle(Color.cosmicCard)
+                                  : AnyShapeStyle(LinearGradient.cosmicGradient))
                             .frame(width: 40, height: 40)
 
                         Text("EXECUTE")
