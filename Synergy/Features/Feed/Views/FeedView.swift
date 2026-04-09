@@ -7,7 +7,9 @@ struct FeedView: View {
     @State private var showSynastrySheet = false
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView + .navigationViewStyle(.stack)
+        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
+        NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
 
@@ -21,7 +23,7 @@ struct FeedView: View {
                     } else {
                         cardDeck
                         actionButtons
-                            .padding(.bottom, 100) // clear custom tab bar
+                            .padding(.bottom, 100)
                     }
                 }
             }
@@ -37,7 +39,9 @@ struct FeedView: View {
                 }
             }
             .animation(.spring(response: 0.4), value: vm.showMatchAlert)
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Nav Bar
@@ -229,19 +233,14 @@ struct SynastryDetailSheet: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView + .navigationViewStyle(.stack)
+        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
+        NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
-                    // Score header
                     scoreHeader
-
-                    // Layer breakdown
                     layersSection
-
-                    // Aspects
                     aspectsSection
-
-                    // Icebreaker
                     icebreakerSection
                 }
                 .padding(Spacing.xl)
@@ -249,8 +248,7 @@ struct SynastryDetailSheet: View {
             .background(Color.cosmicDark)
             .navigationTitle("\(item.user.displayName) · Synastry")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.cosmicDarkAlt, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
@@ -259,6 +257,7 @@ struct SynastryDetailSheet: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private var scoreHeader: some View {

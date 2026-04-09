@@ -10,7 +10,8 @@ struct PaywallView: View {
     @State private var showingPurchase = false
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView; iOS 16+: replace with NavigationStack
+        NavigationView {
             ZStack {
                 LinearGradient.onboardingBg.ignoresSafeArea()
                 StarParticleView(count: 40).ignoresSafeArea()
@@ -39,6 +40,7 @@ struct PaywallView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Header

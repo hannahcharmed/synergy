@@ -2,13 +2,20 @@ import SwiftUI
 import PhotosUI
 
 // MARK: - Screen 05: Profile Setup
-// Astro-native prompts, 3-word vibe tags, 1-6 photos.
-// Target 80%+ completion, avg 4.2 min on screen.
+
+// NOTE: iOS 15 Compatibility
+// PhotosPicker (iOS 16+) replaced with PHPickerRepresentable below.
+// TextEditor .scrollContentBackground(.hidden) (iOS 16+) replaced with
+// UITextView.appearance().backgroundColor = .clear in SynergyApp.init().
+// When upgrading to iOS 16+:
+//   - Replace @State private var showPhotoPicker + .sheet(isPresented: $showPhotoPicker)
+//     with the PhotosPicker / PhotosPickerItem pattern
+//   - Add .scrollContentBackground(.hidden) back to TextEditor
+//   - Delete PHPickerRepresentable at the bottom of this file
 
 struct ProfileSetupView: View {
     @EnvironmentObject var vm: OnboardingViewModel
-    @State private var photoPickerItems: [PhotosPickerItem] = []
-    @State private var showPhotoTip = false
+    @State private var showPhotoPicker = false
 
     private var signPrompt: String {
         guard let chart = vm.computedChart else { return "What do people always get wrong about you?" }
@@ -18,24 +25,20 @@ struct ProfileSetupView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: Spacing.xl) {
-                // Header
                 header
-
-                // Photo grid
                 photoSection
-
-                // Astro-native bio prompt
                 bioSection
-
-                // 3-word vibe tags
                 vibeSection
-
-                // CTA
                 ctaButton
                     .padding(.bottom, Spacing.xxxl)
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.top, Spacing.lg)
+        }
+        .sheet(isPresented: $showPhotoPicker) {
+            PHPickerRepresentable(maxSelection: max(1, 6 - vm.photos.count)) { images in
+                vm.photos.append(contentsOf: images)
+            }
         }
     }
 
@@ -71,22 +74,13 @@ struct ProfileSetupView: View {
             }
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.sm) {
-                // Existing photos
                 ForEach(vm.photos.indices, id: \.self) { i in
                     photoThumbnail(image: vm.photos[i], index: i)
                 }
 
-                // Add button (if < 6 photos)
                 if vm.photos.count < 6 {
-                    PhotosPicker(
-                        selection: $photoPickerItems,
-                        maxSelectionCount: 6 - vm.photos.count,
-                        matching: .images
-                    ) {
+                    Button { showPhotoPicker = true } label: {
                         addPhotoButton
-                    }
-                    .onChange(of: photoPickerItems) { items in
-                        loadPhotos(from: items)
                     }
                 }
             }
@@ -140,21 +134,6 @@ struct ProfileSetupView: View {
         .frame(width: 100, height: 120)
     }
 
-    private func loadPhotos(from items: [PhotosPickerItem]) {
-        for item in items {
-            item.loadTransferable(type: Data.self) { result in
-                if case .success(let data) = result, let data = data,
-                   let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        // Compress to 1200px max per spec
-                        let compressed = image.preparingThumbnail(of: CGSize(width: 1200, height: 1200)) ?? image
-                        vm.photos.append(compressed)
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - Bio Section
 
     private var bioSection: some View {
@@ -179,7 +158,8 @@ struct ProfileSetupView: View {
                 TextEditor(text: $vm.bio)
                     .font(SynergyFont.body(15))
                     .foregroundColor(.cosmicNeutral)
-                    .scrollContentBackground(.hidden)
+                    // iOS 16+: restore .scrollContentBackground(.hidden)
+                    // iOS 15: handled by UITextView.appearance().backgroundColor = .clear in SynergyApp
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.sm)
                     .frame(minHeight: 100)
@@ -215,7 +195,6 @@ struct ProfileSetupView: View {
                     .systemLabel()
             }
 
-            // Current vibe tags
             if !vm.vibeWords.isEmpty {
                 HStack(spacing: Spacing.sm) {
                     ForEach(Array(vm.vibeWords.enumerated()), id: \.offset) { i, word in
@@ -239,7 +218,6 @@ struct ProfileSetupView: View {
                 .transition(.scale.combined(with: .opacity))
             }
 
-            // Input row
             if vm.vibeWords.count < 3 {
                 HStack {
                     TextField("e.g. Intense", text: $vm.vibeInput)
@@ -293,5 +271,48 @@ struct ProfileSetupView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: vm.canAdvanceFromProfile)
+    }
+}
+
+// MARK: - PHPickerRepresentable (iOS 15 fallback for PhotosPicker)
+// Delete this when upgrading to iOS 16+ (see note at top of file)
+
+struct PHPickerRepresentable: UIViewControllerRepresentable {
+    let maxSelection: Int
+    var onPicked: ([UIImage]) -> Void
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = maxSelection
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onPicked: onPicked) }
+
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let onPicked: ([UIImage]) -> Void
+        init(onPicked: @escaping ([UIImage]) -> Void) { self.onPicked = onPicked }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            var images: [UIImage] = []
+            let group = DispatchGroup()
+            for result in results {
+                group.enter()
+                result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
+                    if let image = object as? UIImage {
+                        let sized = image.preparingThumbnail(of: CGSize(width: 1200, height: 1200)) ?? image
+                        images.append(sized)
+                    }
+                    group.leave()
+                }
+            }
+            group.notify(queue: .main) { self.onPicked(images) }
+        }
     }
 }
