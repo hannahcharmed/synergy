@@ -30,8 +30,9 @@ struct ChatView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { navBarContent }
-        .toolbarBackground(Color.cosmicDarkAlt, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        // iOS 15: nav bar styled globally in SynergyApp.init()
+        // iOS 16+: restore .toolbarBackground(Color.cosmicDarkAlt, for: .navigationBar)
+        //                   .toolbarColorScheme(.dark, for: .navigationBar)
         .ignoresSafeArea(edges: .bottom)
         .onAppear { vm.openConversation(conversation) }
     }

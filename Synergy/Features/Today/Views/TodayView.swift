@@ -7,7 +7,9 @@ struct TodayView: View {
     @State private var selectedRitual: RitualEvent? = nil
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView + .navigationViewStyle(.stack)
+        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
+        NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
 
@@ -23,17 +25,12 @@ struct TodayView: View {
                                 horoscopeCard(h)
                             }
 
-                            // Active rituals
                             if !vm.activeRituals.isEmpty {
                                 ritualSection(title: "ACTIVE_RITUALS", events: vm.activeRituals)
                             }
-
-                            // Aligned matches today
                             if !vm.alignedMatches.isEmpty {
                                 alignedMatchesSection
                             }
-
-                            // Upcoming
                             if !vm.upcomingRituals.isEmpty {
                                 ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
                             }
@@ -47,7 +44,9 @@ struct TodayView: View {
             .sheet(item: $selectedRitual) { ritual in
                 RitualDetailSheet(ritual: ritual)
             }
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Nav Bar
@@ -322,10 +321,10 @@ struct RitualDetailSheet: View {
     private var accentColor: Color { Color(hex: ritual.type.color) }
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView; iOS 16+: replace with NavigationStack
+        NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
-                    // Icon header
                     HStack {
                         Image(systemName: ritual.type.icon)
                             .font(.system(size: 32))
@@ -337,7 +336,6 @@ struct RitualDetailSheet: View {
                         Spacer()
                     }
 
-                    // Description
                     VStack(alignment: .leading, spacing: Spacing.sm) {
                         Text("RITUAL_DESCRIPTION")
                             .systemLabel()
@@ -347,7 +345,6 @@ struct RitualDetailSheet: View {
                             .lineSpacing(5)
                     }
 
-                    // The ritual prompt
                     VStack(alignment: .leading, spacing: Spacing.sm) {
                         Text("RITUAL_PROMPT")
                             .systemLabel()
@@ -375,8 +372,7 @@ struct RitualDetailSheet: View {
             .background(Color.cosmicDark)
             .navigationTitle(ritual.title)
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.cosmicDarkAlt, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
@@ -384,5 +380,6 @@ struct RitualDetailSheet: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }

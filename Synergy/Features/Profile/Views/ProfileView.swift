@@ -7,7 +7,8 @@ struct ProfileView: View {
     @EnvironmentObject var coordinator: AppCoordinator
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView; iOS 16+: replace with NavigationStack
+        NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
 
@@ -29,7 +30,9 @@ struct ProfileView: View {
                 PaywallView()
                     .environmentObject(vm)
             }
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Nav Bar

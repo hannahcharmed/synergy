@@ -7,7 +7,9 @@ struct ConversationsView: View {
     @State private var showChatView = false
 
     var body: some View {
-        NavigationStack {
+        // iOS 15: NavigationView + .navigationViewStyle(.stack)
+        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
+        NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
 
@@ -25,11 +27,9 @@ struct ConversationsView: View {
                     }
                 }
             }
-            .navigationDestination(item: $vm.activeConversation) { conv in
-                ChatView(conversation: conv)
-                    .environmentObject(vm)
-            }
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Nav Bar
@@ -59,8 +59,16 @@ struct ConversationsView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(vm.conversations) { conv in
-                    ConversationRow(conversation: conv)
-                        .onTapGesture { vm.openConversation(conv) }
+                    // iOS 15: NavigationLink for programmatic push
+                    // iOS 16+: restore .navigationDestination(item:) on NavigationStack
+                    NavigationLink(destination:
+                        ChatView(conversation: conv)
+                            .environmentObject(vm)
+                    ) {
+                        ConversationRow(conversation: conv)
+                    }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded { vm.openConversation(conv) })
 
                     Divider()
                         .overlay(Color.cosmicBorder.opacity(0.5))
