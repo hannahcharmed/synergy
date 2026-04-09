@@ -118,7 +118,8 @@ struct CosmicTabBar: View {
                     // Active pill background
                     if isSelected {
                         Capsule()
-                            .fill(LinearGradient.cosmicGradient.opacity(0.2))
+                            .fill(LinearGradient.cosmicGradient)
+                            .opacity(0.2)
                             .frame(width: 48, height: 28)
                             .transition(.scale.combined(with: .opacity))
                     }

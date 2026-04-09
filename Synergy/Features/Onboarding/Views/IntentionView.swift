@@ -110,8 +110,8 @@ struct IntentionCard: View {
                 ZStack {
                     Circle()
                         .fill(isSelected
-                              ? LinearGradient.cosmicGradient
-                              : Color.cosmicCard)
+                              ? AnyShapeStyle(LinearGradient.cosmicGradient)
+                              : AnyShapeStyle(Color.cosmicCard))
                         .frame(width: 44, height: 44)
                         .overlay(
                             Circle().strokeBorder(

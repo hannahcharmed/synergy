@@ -252,11 +252,13 @@ struct MessageBubble: View {
                     .foregroundColor(.cosmicNeutral)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, 10)
-                    .background(
-                        message.isFromCurrentUser
-                            ? LinearGradient.cosmicGradient.opacity(0.85)
-                            : Color(hex: "#1E2229") as? LinearGradient ?? LinearGradient(colors: [Color(hex: "#1E2229")], startPoint: .top, endPoint: .bottom)
-                    )
+                    .background {
+                        if message.isFromCurrentUser {
+                            LinearGradient.cosmicGradient.opacity(0.85)
+                        } else {
+                            Color(hex: "#1E2229")
+                        }
+                    }
                     .clipShape(ChatBubbleShape(isFromCurrentUser: message.isFromCurrentUser))
 
                 // Timestamp + read receipt
