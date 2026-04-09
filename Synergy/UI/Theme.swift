@@ -184,7 +184,6 @@ struct SystemLabelStyle: ViewModifier {
         content
             .font(SynergyFont.systemLabel)
             .foregroundColor(.cosmicMuted)
-            .kerning(1.5)
             .textCase(.uppercase)
     }
 }
