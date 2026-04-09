@@ -148,7 +148,7 @@ struct FirstMatchRevealView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("AI_ICEBREAKER")
                         .systemLabel()
-                    Text(""\(match.aiIcebreaker)"")
+                    Text("\u{201C}\(match.aiIcebreaker)\u{201D}")
                         .font(SynergyFont.body(14))
                         .foregroundColor(.cosmicNeutral.opacity(0.8))
                         .lineSpacing(4)

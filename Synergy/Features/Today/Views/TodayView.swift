@@ -349,7 +349,7 @@ struct RitualDetailSheet: View {
                         Text("RITUAL_PROMPT")
                             .systemLabel()
                             .foregroundColor(accentColor.opacity(0.8))
-                        Text(""\(ritual.ritualPrompt)"")
+                        Text("\u{201C}\(ritual.ritualPrompt)\u{201D}")
                             .font(SynergyFont.headlineMedium(17))
                             .foregroundColor(.cosmicNeutral)
                             .lineSpacing(5)

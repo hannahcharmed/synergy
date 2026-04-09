@@ -367,7 +367,7 @@ struct SynastryDetailSheet: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("AI_ICEBREAKER")
                 .systemLabel()
-            Text(""\(item.aiIcebreaker)"")
+            Text("\u{201C}\(item.aiIcebreaker)\u{201D}")
                 .font(SynergyFont.body(15))
                 .foregroundColor(.cosmicNeutral)
                 .lineSpacing(5)
