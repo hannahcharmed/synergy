@@ -374,7 +374,7 @@ struct RitualDetailSheet: View {
             .navigationBarTitleDisplayMode(.large)
             // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                         .foregroundColor(.cosmicCyan)
                 }

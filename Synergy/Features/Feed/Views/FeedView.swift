@@ -250,7 +250,7 @@ struct SynastryDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                         .font(SynergyFont.body(14))
                         .foregroundColor(.cosmicCyan)
