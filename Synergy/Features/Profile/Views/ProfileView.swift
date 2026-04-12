@@ -307,6 +307,7 @@ struct SettingsMenuSheet: View {
     @EnvironmentObject var vm: ProfileViewModel
     @EnvironmentObject var coordinator: AppCoordinator
     @Environment(\.dismiss) var dismiss
+    @AppStorage("colorScheme") private var colorSchemePreference: String = "dark"
 
     var body: some View {
         NavigationView {
@@ -334,6 +335,23 @@ struct SettingsMenuSheet: View {
                             }
                         }
                         .padding(.bottom, Spacing.sm)
+                    }
+
+                    Divider().overlay(Color.cosmicBorder)
+
+                    // Appearance
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        Text("APPEARANCE")
+                            .systemLabel()
+                            .padding(.horizontal, Spacing.lg)
+
+                        Picker("", selection: $colorSchemePreference) {
+                            Text("Dark").tag("dark")
+                            Text("Light").tag("light")
+                            Text("System").tag("system")
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, Spacing.lg)
                     }
 
                     Divider().overlay(Color.cosmicBorder)

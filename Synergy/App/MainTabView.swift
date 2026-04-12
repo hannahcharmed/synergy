@@ -109,6 +109,9 @@ struct CosmicTabBar: View {
         let isSelected = selectedTab == tab
 
         Button {
+            if selectedTab != tab {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = tab
             }

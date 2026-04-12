@@ -5,6 +5,7 @@ import SwiftUI
 struct FeedView: View {
     @EnvironmentObject var vm: FeedViewModel
     @State private var showSynastrySheet = false
+    @State private var showDiscoverySettings = false
 
     var body: some View {
         // iOS 15: NavigationView + .navigationViewStyle(.stack)
@@ -29,6 +30,9 @@ struct FeedView: View {
             }
             .sheet(item: $vm.selectedItem) { item in
                 SynastryDetailSheet(item: item)
+            }
+            .sheet(isPresented: $showDiscoverySettings) {
+                DiscoverySettingsSheet()
             }
             .overlay {
                 if vm.showMatchAlert, let match = vm.latestMatch {
@@ -62,7 +66,7 @@ struct FeedView: View {
 
             HStack(spacing: Spacing.md) {
                 CosmicIconButton("slider.horizontal.3") {
-                    // Filter sheet
+                    showDiscoverySettings = true
                 }
 
                 CosmicIconButton("arrow.counterclockwise") {

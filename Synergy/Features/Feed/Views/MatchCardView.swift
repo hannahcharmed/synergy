@@ -14,8 +14,10 @@ struct MatchCardView: View {
     @State private var dragAngle: Double = 0
     @State private var likeOpacity: Double = 0
     @State private var passOpacity: Double = 0
+    @State private var synastryHintOpacity: Double = 0
 
     private let swipeThreshold: CGFloat = 100
+    private let swipeUpThreshold: CGFloat = -80
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -111,7 +113,36 @@ struct MatchCardView: View {
                     }
                 )
                 .opacity(passOpacity)
+
+            // SYNASTRY (swipe up)
+            RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 3)
+                .overlay(
+                    VStack {
+                        Spacer()
+                        synastryLabel
+                            .padding(.bottom, Spacing.xl)
+                    }
+                )
+                .opacity(synastryHintOpacity)
         }
+    }
+
+    private var synastryLabel: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "chevron.up")
+                .font(.system(size: 14, weight: .bold))
+            Text("SYNASTRY")
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .kerning(2)
+        }
+        .foregroundStyle(LinearGradient.cosmicGradient)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .overlay(
+            Capsule()
+                .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 1.5)
+        )
     }
 
     private var likeLabel: some View {
@@ -225,6 +256,21 @@ struct MatchCardView: View {
                     }
                 }
             }
+
+            // Swipe-up hint (only on top card)
+            if isTop {
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text("synastry")
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    }
+                    .foregroundColor(.cosmicMuted.opacity(0.6))
+                    Spacer()
+                }
+            }
         }
         .padding(Spacing.lg)
         .padding(.bottom, Spacing.sm)
@@ -235,16 +281,35 @@ struct MatchCardView: View {
     private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
-                dragOffset = value.translation
-                dragAngle = Double(value.translation.width / 20)
-                likeOpacity = Double(max(0, value.translation.width / swipeThreshold))
-                passOpacity = Double(max(0, -value.translation.width / swipeThreshold))
+                let isSwipingUp = value.translation.height < 0
+                    && abs(value.translation.height) > abs(value.translation.width)
+                if isSwipingUp {
+                    // Only show synastry hint — no horizontal offset
+                    let progress = min(1, -value.translation.height / 120)
+                    synastryHintOpacity = Double(progress)
+                } else {
+                    synastryHintOpacity = 0
+                    dragOffset = value.translation
+                    dragAngle = Double(value.translation.width / 20)
+                    likeOpacity = Double(max(0, value.translation.width / swipeThreshold))
+                    passOpacity = Double(max(0, -value.translation.width / swipeThreshold))
+                }
             }
             .onEnded { value in
                 let w = value.translation.width
-                if w > swipeThreshold {
+                let h = value.translation.height
+                let isSwipeUp = h < swipeUpThreshold && abs(w) < 60
+                if isSwipeUp {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        synastryHintOpacity = 0
+                        dragOffset = .zero
+                    }
+                    onTap?()   // opens synastry sheet
+                } else if w > swipeThreshold {
+                    synastryHintOpacity = 0
                     swipeOff(direction: .like)
                 } else if w < -swipeThreshold {
+                    synastryHintOpacity = 0
                     swipeOff(direction: .pass)
                 } else {
                     // Snap back
@@ -253,6 +318,7 @@ struct MatchCardView: View {
                         dragAngle = 0
                         likeOpacity = 0
                         passOpacity = 0
+                        synastryHintOpacity = 0
                     }
                 }
             }
