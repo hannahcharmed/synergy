@@ -147,7 +147,7 @@ struct TodayView: View {
                 .fill(Color.cosmicCard)
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.md)
-                        .strokeBorder(LinearGradient.cosmicGradient.opacity(0.5), lineWidth: 1.5)
+                        .strokeBorder(Color.cosmicCyan.opacity(0.4), lineWidth: 1.5)
                 )
         )
     }
@@ -274,7 +274,8 @@ struct TodayView: View {
         HStack(spacing: Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient.cosmicGradient.opacity(0.2))
+                    .fill(LinearGradient.cosmicGradient)
+                    .opacity(0.2)
                     .frame(width: 44, height: 44)
                 Text("✦")
                     .font(.system(size: 20))
@@ -296,7 +297,7 @@ struct TodayView: View {
         .cosmicCard()
         .overlay(
             RoundedRectangle(cornerRadius: Radius.card)
-                .strokeBorder(LinearGradient.cosmicGradient.opacity(0.3), lineWidth: 1)
+                .strokeBorder(Color.cosmicPurple.opacity(0.4), lineWidth: 1)
         )
     }
 
@@ -614,7 +615,7 @@ struct WeeklyReportSheet: View {
         .cosmicCard()
         .overlay(
             RoundedRectangle(cornerRadius: Radius.card)
-                .strokeBorder(LinearGradient.cosmicGradient.opacity(0.2), lineWidth: 1)
+                .strokeBorder(Color.cosmicBorder, lineWidth: 1)
         )
     }
 }

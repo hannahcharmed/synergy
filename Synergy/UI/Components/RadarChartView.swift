@@ -37,7 +37,8 @@ struct RadarChartView: View {
 
             // Filled area
             filledPolygon
-                .fill(LinearGradient.cosmicGradient.opacity(0.25))
+                .fill(LinearGradient.cosmicGradient)
+                .opacity(0.25)
             filledPolygon
                 .stroke(LinearGradient.cosmicGradient, lineWidth: 2)
 
