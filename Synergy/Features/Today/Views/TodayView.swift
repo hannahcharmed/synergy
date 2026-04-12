@@ -5,10 +5,9 @@ import SwiftUI
 struct TodayView: View {
     @EnvironmentObject var vm: TodayViewModel
     @State private var selectedRitual: RitualEvent? = nil
+    @State private var showWeeklyReport = false
 
     var body: some View {
-        // iOS 15: NavigationView + .navigationViewStyle(.stack)
-        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
         NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
@@ -20,9 +19,25 @@ struct TodayView: View {
                         VStack(alignment: .leading, spacing: Spacing.xl) {
                             todayNavBar
 
+                            // Transit alert banner
+                            if let alert = vm.activeTransitAlert, vm.showTransitAlert {
+                                transitAlertBanner(alert)
+                                    .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+
+                            // Mercury retrograde warning
+                            if vm.isMercuryRetrograde {
+                                mercuryRetrogradeBanner
+                            }
+
                             if let h = vm.horoscope {
                                 cosmicWeatherBanner(h)
                                 horoscopeCard(h)
+                            }
+
+                            // Cosmic streak
+                            if vm.streakDays >= 2 {
+                                streakCard
                             }
 
                             if !vm.activeRituals.isEmpty {
@@ -35,6 +50,11 @@ struct TodayView: View {
                                 ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
                             }
 
+                            // Weekly synastry report button
+                            if !vm.weeklyReport.isEmpty {
+                                weeklyReportCard
+                            }
+
                             Spacer(minLength: 100)
                         }
                         .padding(.horizontal, Spacing.xl)
@@ -45,7 +65,11 @@ struct TodayView: View {
             .sheet(item: $selectedRitual) { ritual in
                 RitualDetailSheet(ritual: ritual)
             }
+            .sheet(isPresented: $showWeeklyReport) {
+                WeeklyReportSheet(entries: vm.weeklyReport)
+            }
             .navigationBarHidden(true)
+            .animation(.easeInOut(duration: 0.3), value: vm.showTransitAlert)
         }
         .navigationViewStyle(.stack)
     }
@@ -68,13 +92,90 @@ struct TodayView: View {
 
             Spacer()
 
-            // Moon phase icon
+            // Streak indicator (compact, top-right)
+            if vm.streakDays >= 2 {
+                HStack(spacing: 4) {
+                    Text("✦")
+                        .font(.system(size: 11))
+                    Text("\(vm.streakDays)")
+                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                }
+                .foregroundStyle(LinearGradient.cosmicGradient)
+                .padding(.trailing, Spacing.sm)
+            }
+
             Image(systemName: "moon.stars.fill")
                 .font(.system(size: 22))
                 .foregroundStyle(LinearGradient.cosmicGradient)
                 .cosmicPurpleGlow(radius: 8)
         }
         .padding(.top, Spacing.md)
+    }
+
+    // MARK: - Transit Alert Banner
+
+    private func transitAlertBanner(_ alert: TransitAlert) -> some View {
+        HStack(spacing: Spacing.md) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(LinearGradient.cosmicGradient)
+                .frame(width: 32, height: 32)
+                .background(Color.cosmicPurple.opacity(0.15))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("TRANSIT_ACTIVE · +\(alert.boostPercent)% BOOST")
+                    .systemLabel()
+                    .foregroundColor(.cosmicCyan)
+                Text(alert.description)
+                    .font(SynergyFont.body(13, weight: .medium))
+                    .foregroundColor(.cosmicNeutral)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button { vm.dismissTransitAlert() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11))
+                    .foregroundColor(.cosmicMuted)
+            }
+        }
+        .padding(Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.md)
+                .fill(Color.cosmicCard)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .strokeBorder(LinearGradient.cosmicGradient.opacity(0.5), lineWidth: 1.5)
+                )
+        )
+    }
+
+    // MARK: - Mercury Retrograde Banner
+
+    private var mercuryRetrogradeBanner: some View {
+        HStack(spacing: Spacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13))
+                .foregroundColor(.cosmicError)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("MERCURY_RETROGRADE")
+                    .systemLabel()
+                    .foregroundColor(.cosmicError)
+                Text("Back up plans, re-read messages before sending, avoid signing contracts.")
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicNeutral.opacity(0.7))
+                    .lineLimit(2)
+            }
+        }
+        .padding(Spacing.md)
+        .background(Color.cosmicError.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md)
+                .strokeBorder(Color.cosmicError.opacity(0.3), lineWidth: 1)
+        )
     }
 
     // MARK: - Cosmic Weather Banner
@@ -98,7 +199,6 @@ struct TodayView: View {
 
             Spacer()
 
-            // Intensity meter
             HStack(spacing: 3) {
                 ForEach(1...5, id: \.self) { i in
                     Capsule()
@@ -117,7 +217,6 @@ struct TodayView: View {
 
     private func horoscopeCard(_ h: Horoscope) -> some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("DAILY_READING")
@@ -135,7 +234,6 @@ struct TodayView: View {
                     .cosmicGlow(color: .cosmicCyan, radius: 8)
             }
 
-            // Body text
             Text(h.content)
                 .font(SynergyFont.body(15))
                 .foregroundColor(.cosmicNeutral.opacity(0.8))
@@ -144,7 +242,6 @@ struct TodayView: View {
 
             Divider().overlay(Color.cosmicBorder)
 
-            // Lucky aspects
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("LUCKY_ASPECTS")
                     .systemLabel()
@@ -160,7 +257,6 @@ struct TodayView: View {
                 }
             }
 
-            // Model attribution
             HStack {
                 Spacer()
                 Text("generated by \(h.modelVersion)")
@@ -170,6 +266,38 @@ struct TodayView: View {
         }
         .padding(Spacing.lg)
         .cosmicCard()
+    }
+
+    // MARK: - Cosmic Streak Card
+
+    private var streakCard: some View {
+        HStack(spacing: Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.cosmicGradient.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                Text("✦")
+                    .font(.system(size: 20))
+                    .foregroundStyle(LinearGradient.cosmicGradient)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("COSMIC_STREAK")
+                    .systemLabel()
+                Text("\(vm.streakDays) days in a row — the stars notice your consistency.")
+                    .font(SynergyFont.body(13))
+                    .foregroundColor(.cosmicNeutral.opacity(0.8))
+            }
+            Spacer()
+            Text("\(vm.streakDays)")
+                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .foregroundStyle(LinearGradient.cosmicGradient)
+        }
+        .padding(Spacing.md)
+        .cosmicCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(LinearGradient.cosmicGradient.opacity(0.3), lineWidth: 1)
+        )
     }
 
     // MARK: - Ritual Section
@@ -212,6 +340,38 @@ struct TodayView: View {
         }
     }
 
+    // MARK: - Weekly Report Card
+
+    private var weeklyReportCard: some View {
+        Button { showWeeklyReport = true } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 20))
+                    .foregroundColor(.cosmicPurple)
+                    .frame(width: 40, height: 40)
+                    .background(Color.cosmicPurple.opacity(0.12))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("WEEKLY_SYNASTRY_REPORT")
+                        .systemLabel()
+                    Text("Your cosmic connections this week")
+                        .font(SynergyFont.body(13))
+                        .foregroundColor(.cosmicNeutral.opacity(0.8))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(.cosmicMuted)
+            }
+            .padding(Spacing.md)
+            .cosmicCard()
+        }
+        .buttonStyle(.plain)
+    }
+
     private var loadingView: some View {
         VStack(spacing: Spacing.lg) {
             ProgressView().tint(.cosmicCyan).scaleEffect(1.3)
@@ -231,7 +391,6 @@ struct RitualCard: View {
 
     var body: some View {
         HStack(spacing: Spacing.md) {
-            // Icon
             Image(systemName: ritual.type.icon)
                 .font(.system(size: 20))
                 .foregroundColor(accentColor)
@@ -322,7 +481,6 @@ struct RitualDetailSheet: View {
     private var accentColor: Color { Color(hex: ritual.type.color) }
 
     var body: some View {
-        // iOS 15: NavigationView; iOS 16+: replace with NavigationStack
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
@@ -373,7 +531,6 @@ struct RitualDetailSheet: View {
             .background(Color.cosmicDark)
             .navigationTitle(ritual.title)
             .navigationBarTitleDisplayMode(.large)
-            // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
@@ -382,5 +539,82 @@ struct RitualDetailSheet: View {
             }
         }
         .navigationViewStyle(.stack)
+    }
+}
+
+// MARK: - Weekly Report Sheet
+
+struct WeeklyReportSheet: View {
+    let entries: [WeeklyReportEntry]
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Spacing.lg) {
+                        Text("Your matches and the stars are aligning this week. Here's what the transits say.")
+                            .font(SynergyFont.body(14))
+                            .foregroundColor(.cosmicMuted)
+                            .lineSpacing(4)
+                            .padding(.top, Spacing.sm)
+
+                        ForEach(entries) { entry in
+                            weeklyEntryCard(entry)
+                        }
+
+                        Spacer(minLength: 40)
+                    }
+                    .padding(Spacing.xl)
+                }
+            }
+            .navigationTitle("Weekly Report")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    private func weeklyEntryCard(_ entry: WeeklyReportEntry) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.matchName)
+                        .font(SynergyFont.headlineMedium(16))
+                        .foregroundColor(.cosmicNeutral)
+                    Text("BEST DAY: \(entry.bestDay.uppercased())")
+                        .systemLabel()
+                        .foregroundColor(.cosmicCyan)
+                }
+                Spacer()
+                MatchScorePill(score: entry.cosmicScore)
+            }
+
+            Text(entry.weeklyInsight)
+                .font(SynergyFont.body(14))
+                .foregroundColor(.cosmicNeutral.opacity(0.8))
+                .lineSpacing(4)
+
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.cosmicPurple)
+                Text(entry.transitNote)
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicMuted)
+                    .lineLimit(2)
+            }
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(LinearGradient.cosmicGradient.opacity(0.2), lineWidth: 1)
+        )
     }
 }

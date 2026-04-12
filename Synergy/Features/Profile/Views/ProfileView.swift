@@ -8,6 +8,8 @@ struct ProfileView: View {
 
     // Tracks which settings sheet is active
     @State private var activeSettings: SettingsDestination? = nil
+    @State private var showShareCard = false
+    @State private var shareImage: UIImage? = nil
 
     enum SettingsDestination: String, Identifiable {
         case notifications, discovery, privacy, help
@@ -44,6 +46,11 @@ struct ProfileView: View {
             .sheet(item: $activeSettings) { dest in
                 settingsSheet(for: dest)
             }
+            .sheet(isPresented: $showShareCard) {
+                if let img = shareImage {
+                    ShareSheetView(items: [img])
+                }
+            }
             .navigationBarHidden(true)
         }
         .navigationViewStyle(.stack)
@@ -62,8 +69,15 @@ struct ProfileView: View {
                     .foregroundColor(.cosmicMuted)
             }
             Spacer()
-            CosmicIconButton("gearshape.fill") {
-                vm.showSettings = true
+            HStack(spacing: Spacing.sm) {
+                CosmicIconButton("square.and.arrow.up") {
+                    shareImage = ShareableProfileCardView(user: user)
+                        .snapshot(size: CGSize(width: 320, height: 568))
+                    showShareCard = true
+                }
+                CosmicIconButton("gearshape.fill") {
+                    vm.showSettings = true
+                }
             }
         }
         .padding(.top, Spacing.md)

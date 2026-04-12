@@ -15,7 +15,6 @@ final class MockDataService {
         birthTime: Date?,
         city: String
     ) -> BirthChart {
-        // Mock Swiss Ephemeris result for London, 14 Nov 1996, 07:42
         BirthChart(
             id: UUID(),
             userId: MockData.currentUserId,
@@ -112,7 +111,6 @@ enum MockData {
     )
 
     static func cosmicScore(for id: UUID) -> Int {
-        // Deterministic score per user (based on hash)
         let scores = [94, 87, 81, 76, 92, 68, 89, 73, 85, 79, 91, 65]
         let index = abs(id.hashValue) % scores.count
         return scores[index]
@@ -149,138 +147,48 @@ enum MockData {
     // MARK: - Match Profiles
 
     static let matchProfiles: [User] = [
-        makeUser(
-            name: "Jade",
-            age: 28,
-            sun: .scorpio,
-            moon: .cancer,
-            rising: .libra,
-            city: "London",
-            bio: "Astrology nerd, depth over breadth. Ask me about my 8th house.",
-            prompt: "We're not as scary as we seem — just selective.",
-            vibes: ["Intense", "Loyal", "Witchy"],
-            distance: 2.4,
-            photo: "jade_1"
-        ),
-        makeUser(
-            name: "Freya",
-            age: 26,
-            sun: .pisces,
-            moon: .scorpio,
-            rising: .capricorn,
-            city: "London",
-            bio: "Marine biologist by day, stargazer by night. Let's talk Jungian archetypes.",
-            prompt: "Pisces are not flaky — we just live in seventeen dimensions at once.",
-            vibes: ["Dreamy", "Deep", "Creative"],
-            distance: 3.1,
-            photo: "freya_1"
-        ),
-        makeUser(
-            name: "Sol",
-            age: 29,
-            sun: .aquarius,
-            moon: .gemini,
-            rising: .sagittarius,
-            city: "London",
-            bio: "Musician. Philosopher. Terrible at texting back but incredible in person.",
-            prompt: "Aquarians are the most personal of the impersonal signs.",
-            vibes: ["Electric", "Free", "Curious"],
-            distance: 5.7,
-            photo: "sol_1"
-        ),
-        makeUser(
-            name: "Aria",
-            age: 27,
-            sun: .cancer,
-            moon: .taurus,
-            rising: .virgo,
-            city: "London",
-            bio: "Chef, homebody, occasional chaos agent. My love language is a slow Sunday.",
-            prompt: "We cry at adverts AND fix everything — the duality is the point.",
-            vibes: ["Nurturing", "Grounded", "Real"],
-            distance: 1.8,
-            photo: "aria_1"
-        ),
-        makeUser(
-            name: "Orion",
-            age: 30,
-            sun: .capricorn,
-            moon: .scorpio,
-            rising: .aries,
-            city: "London",
-            bio: "Architect. I build things that outlast me — including relationships.",
-            prompt: "Capricorns show love by quietly solving your problems.",
-            vibes: ["Ambitious", "Steady", "Private"],
-            distance: 4.2,
-            photo: "orion_1"
-        ),
-        makeUser(
-            name: "Luna",
-            age: 25,
-            sun: .libra,
-            moon: .aquarius,
-            rising: .gemini,
-            city: "London",
-            bio: "Journalist. I write about the spaces between things — relationships, cities, ideas.",
-            prompt: "Libras don't avoid conflict — we just prefer a nicer word for it.",
-            vibes: ["Witty", "Fair", "Magnetic"],
-            distance: 2.9,
-            photo: "luna_1"
-        ),
+        makeUser(name: "Jade",  age: 28, sun: .scorpio,    moon: .cancer,   rising: .libra,       city: "London", bio: "Astrology nerd, depth over breadth. Ask me about my 8th house.",               prompt: "We're not as scary as we seem — just selective.",                  vibes: ["Intense", "Loyal", "Witchy"],    distance: 2.4, photo: "jade_1",  minutesLastActive: 2),
+        makeUser(name: "Freya", age: 26, sun: .pisces,     moon: .scorpio,  rising: .capricorn,   city: "London", bio: "Marine biologist by day, stargazer by night. Let's talk Jungian archetypes.", prompt: "Pisces are not flaky — we just live in seventeen dimensions at once.", vibes: ["Dreamy", "Deep", "Creative"],    distance: 3.1, photo: "freya_1", minutesLastActive: 45),
+        makeUser(name: "Sol",   age: 29, sun: .aquarius,   moon: .gemini,   rising: .sagittarius, city: "London", bio: "Musician. Philosopher. Terrible at texting back but incredible in person.",   prompt: "Aquarians are the most personal of the impersonal signs.",           vibes: ["Electric", "Free", "Curious"],   distance: 5.7, photo: "sol_1",   minutesLastActive: 180),
+        makeUser(name: "Aria",  age: 27, sun: .cancer,     moon: .taurus,   rising: .virgo,       city: "London", bio: "Chef, homebody, occasional chaos agent. My love language is a slow Sunday.",  prompt: "We cry at adverts AND fix everything — the duality is the point.",   vibes: ["Nurturing", "Grounded", "Real"], distance: 1.8, photo: "aria_1",  minutesLastActive: 600),
+        makeUser(name: "Orion", age: 30, sun: .capricorn,  moon: .scorpio,  rising: .aries,       city: "London", bio: "Architect. I build things that outlast me — including relationships.",        prompt: "Capricorns show love by quietly solving your problems.",             vibes: ["Ambitious", "Steady", "Private"],distance: 4.2, photo: "orion_1", minutesLastActive: 1200),
+        makeUser(name: "Luna",  age: 25, sun: .libra,      moon: .aquarius, rising: .gemini,      city: "London", bio: "Journalist. I write about the spaces between things — relationships, cities.", prompt: "Libras don't avoid conflict — we just prefer a nicer word for it.", vibes: ["Witty", "Fair", "Magnetic"],     distance: 2.9, photo: "luna_1",  minutesLastActive: 3),
     ]
 
     private static func makeUser(
-        name: String,
-        age: Int,
-        sun: ZodiacSign,
-        moon: ZodiacSign,
-        rising: ZodiacSign,
-        city: String,
-        bio: String,
-        prompt: String,
-        vibes: [String],
-        distance: Double,
-        photo: String
+        name: String, age: Int,
+        sun: ZodiacSign, moon: ZodiacSign, rising: ZodiacSign,
+        city: String, bio: String, prompt: String, vibes: [String],
+        distance: Double, photo: String, minutesLastActive: Double
     ) -> User {
         let userId = UUID()
         let positions = [
-            PlanetaryPosition(planet: .sun,      sign: sun,    degree: Double.random(in: 0...360), houseNumber: 1, isRetrograde: false),
-            PlanetaryPosition(planet: .moon,     sign: moon,   degree: Double.random(in: 0...360), houseNumber: 4, isRetrograde: false),
-            PlanetaryPosition(planet: .ascendant,sign: rising, degree: Double.random(in: 0...360), houseNumber: 1, isRetrograde: false),
-            PlanetaryPosition(planet: .venus,    sign: ZodiacSign.allCases.randomElement()!, degree: Double.random(in: 0...360), houseNumber: 2, isRetrograde: false),
-            PlanetaryPosition(planet: .mars,     sign: ZodiacSign.allCases.randomElement()!, degree: Double.random(in: 0...360), houseNumber: 3, isRetrograde: false),
+            PlanetaryPosition(planet: .sun,       sign: sun,    degree: Double.random(in: 0...360), houseNumber: 1, isRetrograde: false),
+            PlanetaryPosition(planet: .moon,      sign: moon,   degree: Double.random(in: 0...360), houseNumber: 4, isRetrograde: false),
+            PlanetaryPosition(planet: .ascendant, sign: rising, degree: Double.random(in: 0...360), houseNumber: 1, isRetrograde: false),
+            PlanetaryPosition(planet: .venus,     sign: ZodiacSign.allCases.randomElement()!, degree: Double.random(in: 0...360), houseNumber: 2, isRetrograde: false),
+            PlanetaryPosition(planet: .mars,      sign: ZodiacSign.allCases.randomElement()!, degree: Double.random(in: 0...360), houseNumber: 3, isRetrograde: false),
         ]
 
         let chart = BirthChart(
-            id: UUID(),
-            userId: userId,
+            id: UUID(), userId: userId,
             birthDate: Calendar.current.date(byAdding: .year, value: -age, to: Date())!,
-            birthTime: nil,
-            birthCity: city,
-            latitude: 51.5074,
-            longitude: -0.1278,
-            timezone: "Europe/London",
+            birthTime: nil, birthCity: city,
+            latitude: 51.5074, longitude: -0.1278, timezone: "Europe/London",
             positions: positions
         )
 
         let profile = UserProfile(
-            photos: [photo],
-            bio: bio,
+            photos: [photo], bio: bio,
             intentionTags: [.aSoulmate, .growth].shuffled().prefix(2).map { $0 },
-            vibeWords: vibes,
-            promptAnswer: prompt
+            vibeWords: vibes, promptAnswer: prompt
         )
 
         return User(
-            id: userId,
-            displayName: name,
-            age: age,
-            subscriptionTier: .stardust,
-            birthChart: chart,
-            profile: profile,
-            locationDisplay: "\(city), UK",
-            distanceMiles: distance,
-            lastActive: Date().addingTimeInterval(-Double.random(in: 0...3600)),
+            id: userId, displayName: name, age: age,
+            subscriptionTier: .stardust, birthChart: chart, profile: profile,
+            locationDisplay: "\(city), UK", distanceMiles: distance,
+            lastActive: Date().addingTimeInterval(-minutesLastActive * 60),
             isVerified: Bool.random()
         )
     }
@@ -288,24 +196,17 @@ enum MockData {
     // MARK: - Conversations
 
     static var conversations: [Conversation] {
-        let jade = matchProfiles[0]
+        let jade  = matchProfiles[0]
         let freya = matchProfiles[1]
+        let convId1 = UUID()
+        let convId2 = UUID()
 
         let match1 = Match(
-            id: UUID(),
-            userA: matchProfiles[0],
-            userB: jade,
-            cosmicScore: 94,
+            id: UUID(), userA: matchProfiles[0], userB: jade, cosmicScore: 94,
             synastry: SynastryResult(
-                userAId: currentUserId,
-                userBId: jade.id,
-                aspects: aspects,
-                cosmicMatchScore: 94,
-                synastryScore: 38,
-                elementalScore: 24,
-                intentScore: 19,
-                transitScore: 13,
-                computedAt: Date(),
+                userAId: currentUserId, userBId: jade.id, aspects: aspects,
+                cosmicMatchScore: 94, synastryScore: 38, elementalScore: 24,
+                intentScore: 19, transitScore: 13, computedAt: Date(),
                 highlights: ["Venus trine Venus", "Moon in Scorpio harmony", "Rising sign complement"],
                 transitBoost: transitBoost
             ),
@@ -316,20 +217,11 @@ enum MockData {
         )
 
         let match2 = Match(
-            id: UUID(),
-            userA: matchProfiles[1],
-            userB: freya,
-            cosmicScore: 87,
+            id: UUID(), userA: matchProfiles[1], userB: freya, cosmicScore: 87,
             synastry: SynastryResult(
-                userAId: currentUserId,
-                userBId: freya.id,
-                aspects: aspects,
-                cosmicMatchScore: 87,
-                synastryScore: 35,
-                elementalScore: 22,
-                intentScore: 17,
-                transitScore: 13,
-                computedAt: Date(),
+                userAId: currentUserId, userBId: freya.id, aspects: aspects,
+                cosmicMatchScore: 87, synastryScore: 35, elementalScore: 22,
+                intentScore: 17, transitScore: 13, computedAt: Date(),
                 highlights: ["Neptune trine Moon", "Venus sextile Jupiter"],
                 transitBoost: nil
             ),
@@ -339,63 +231,68 @@ enum MockData {
             aiIcebreaker: "Your Pisces energy and my Scorpio depth — we're basically the entire ocean."
         )
 
+        let msgs1 = messages(for: convId1)
+        let msgs2: [Message] = []
+
         return [
             Conversation(
-                id: UUID(),
-                match: match1,
-                messages: messages(for: UUID()),
-                lastMessage: Message(
-                    id: UUID(),
-                    conversationId: UUID(),
-                    senderId: jade.id,
-                    content: "Have you checked the synastry heatmap? Saturn's doing something wild in your 7th.",
-                    createdAt: Date().addingTimeInterval(-1800),
-                    readAt: nil,
-                    isFromCurrentUser: false
-                ),
+                id: convId1, match: match1,
+                messages: msgs1,
+                lastMessage: msgs1.last,
                 unreadCount: 2,
-                updatedAt: Date().addingTimeInterval(-1800)
+                updatedAt: Date().addingTimeInterval(-1800),
+                streakDays: 7,
+                expiresAt: nil          // Active streak — no expiry
             ),
             Conversation(
-                id: UUID(),
-                match: match2,
-                messages: [],
+                id: convId2, match: match2,
+                messages: msgs2,
                 lastMessage: Message(
-                    id: UUID(),
-                    conversationId: UUID(),
-                    senderId: currentUserId,
+                    conversationId: convId2, senderId: currentUserId,
                     content: "The distance between us is merely an optical illusion calibrated by outdated hardware.",
                     createdAt: Date().addingTimeInterval(-7200),
                     readAt: Date().addingTimeInterval(-6000),
                     isFromCurrentUser: true
                 ),
                 unreadCount: 0,
-                updatedAt: Date().addingTimeInterval(-7200)
-            )
+                updatedAt: Date().addingTimeInterval(-7200),
+                streakDays: 0,
+                expiresAt: Date().addingTimeInterval(3600 * 18)  // Expires in 18h
+            ),
         ]
     }
 
     static func messages(for conversationId: UUID) -> [Message] {
-        [
-            Message(id: UUID(), conversationId: conversationId, senderId: currentUserId,
+        let otherId = UUID()
+        return [
+            Message(conversationId: conversationId, senderId: currentUserId,
                     content: "What's the most Scorpio thing about you?",
-                    createdAt: Date().addingTimeInterval(-86000), readAt: Date().addingTimeInterval(-85000),
+                    createdAt: Date().addingTimeInterval(-86000),
+                    readAt: Date().addingTimeInterval(-85000),
                     isFromCurrentUser: true),
-            Message(id: UUID(), conversationId: conversationId, senderId: UUID(),
+            Message(conversationId: conversationId, senderId: otherId,
                     content: "We're not as scary as we seem, just selective 😌 I've been to three therapy sessions this week and I still managed to rewire my whole flat.",
-                    createdAt: Date().addingTimeInterval(-84000), readAt: Date().addingTimeInterval(-83000),
-                    isFromCurrentUser: false),
-            Message(id: UUID(), conversationId: conversationId, senderId: currentUserId,
+                    createdAt: Date().addingTimeInterval(-84000),
+                    readAt: Date().addingTimeInterval(-83000),
+                    isFromCurrentUser: false,
+                    reactions: ["✦": 1]),
+            Message(conversationId: conversationId, senderId: currentUserId,
                     content: "The rewiring IS the therapy honestly. What's the full moon ritual looking like for you?",
-                    createdAt: Date().addingTimeInterval(-82000), readAt: Date().addingTimeInterval(-81000),
+                    createdAt: Date().addingTimeInterval(-82000),
+                    readAt: Date().addingTimeInterval(-81000),
                     isFromCurrentUser: true),
-            Message(id: UUID(), conversationId: conversationId, senderId: UUID(),
-                    content: "Connection established. The celestial transit at your current coordinates indicates a significant shift in Mercury's shadow. How are you processing the frequency oscillation today?",
-                    createdAt: Date().addingTimeInterval(-3600), readAt: nil,
-                    isFromCurrentUser: false),
-            Message(id: UUID(), conversationId: conversationId, senderId: UUID(),
+            // Mock voice note
+            Message(conversationId: conversationId, senderId: otherId,
+                    content: "",
+                    createdAt: Date().addingTimeInterval(-3700),
+                    readAt: nil,
+                    isFromCurrentUser: false,
+                    isVoiceNote: true,
+                    voiceDuration: 18.5),
+            Message(conversationId: conversationId, senderId: otherId,
                     content: "Have you checked the synastry heatmap? Saturn's doing something wild in your 7th.",
-                    createdAt: Date().addingTimeInterval(-1800), readAt: nil,
+                    createdAt: Date().addingTimeInterval(-1800),
+                    readAt: nil,
                     isFromCurrentUser: false),
         ]
     }
@@ -403,11 +300,11 @@ enum MockData {
     // MARK: - Aspects
 
     static let aspects: [Aspect] = [
-        Aspect(id: UUID(), planetA: .venus,  planetB: .venus,  type: .trine,       orb: 1.2, weight: 1.0),
-        Aspect(id: UUID(), planetA: .moon,   planetB: .moon,   type: .conjunction, orb: 2.8, weight: 0.95),
-        Aspect(id: UUID(), planetA: .sun,    planetB: .moon,   type: .sextile,     orb: 3.1, weight: 0.85),
-        Aspect(id: UUID(), planetA: .mars,   planetB: .venus,  type: .trine,       orb: 4.2, weight: 0.9),
-        Aspect(id: UUID(), planetA: .mercury,planetB: .mercury,type: .conjunction, orb: 1.8, weight: 0.7),
+        Aspect(id: UUID(), planetA: .venus,   planetB: .venus,   type: .trine,       orb: 1.2, weight: 1.0),
+        Aspect(id: UUID(), planetA: .moon,    planetB: .moon,    type: .conjunction, orb: 2.8, weight: 0.95),
+        Aspect(id: UUID(), planetA: .sun,     planetB: .moon,    type: .sextile,     orb: 3.1, weight: 0.85),
+        Aspect(id: UUID(), planetA: .mars,    planetB: .venus,   type: .trine,       orb: 4.2, weight: 0.9),
+        Aspect(id: UUID(), planetA: .mercury, planetB: .mercury, type: .conjunction, orb: 1.8, weight: 0.7),
     ]
 
     // MARK: - Horoscope
@@ -440,8 +337,7 @@ enum MockData {
 
     static let ritualEvents: [RitualEvent] = [
         RitualEvent(
-            id: UUID(),
-            type: .newMoon,
+            id: UUID(), type: .newMoon,
             title: "New Moon in Taurus",
             description: "Set intentions around love, beauty, and material security. Plant the seeds of what you want to attract.",
             startDate: Date().addingTimeInterval(-86400),
@@ -450,8 +346,7 @@ enum MockData {
             isActive: true
         ),
         RitualEvent(
-            id: UUID(),
-            type: .venusSeason,
+            id: UUID(), type: .venusSeason,
             title: "Venus Season",
             description: "Venus is the planet of love, beauty, and attraction. Her current position amplifies all romantic connections.",
             startDate: Date().addingTimeInterval(-86400 * 7),
@@ -460,8 +355,7 @@ enum MockData {
             isActive: true
         ),
         RitualEvent(
-            id: UUID(),
-            type: .fullMoon,
+            id: UUID(), type: .fullMoon,
             title: "Full Moon in Scorpio",
             description: "Release what no longer serves your highest romantic timeline. Let the wave crash.",
             startDate: Date().addingTimeInterval(86400 * 12),

@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Chat Message Thread
-// ASTRO_OS aesthetic: "TRANSMISSION_SECURE" label, cosmic chat bubbles.
+// ASTRO_OS aesthetic: cosmic chat bubbles, reactions, voice notes, icebreaker suggestions.
 
 struct ChatView: View {
     let conversation: Conversation
@@ -9,12 +9,16 @@ struct ChatView: View {
     @FocusState private var inputFocused: Bool
     @State private var scrollProxy: ScrollViewProxy? = nil
     @State private var showSynastry = false
+    @State private var showUnmatchSheet = false
+    @State private var showReportSheet = false
+    @State private var selectedUnmatchReason: UnmatchReason? = nil
+    @State private var selectedReportReason: ReportReason? = nil
+    @State private var isRecordingVoice = false
 
     private var messages: [Message] {
         vm.activeConversation?.messages ?? conversation.messages
     }
 
-    // Build a FeedItem from the conversation's match for SynastryDetailSheet
     private var synastryItem: FeedItem {
         FeedItem(
             id: conversation.match.id,
@@ -33,26 +37,29 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 statusBar
                 messageList
-                inputBar
+                if isRecordingVoice {
+                    VoiceNoteRecorderView(isRecording: $isRecordingVoice) { duration in
+                        vm.sendVoiceNote(duration: duration)
+                    }
+                } else {
+                    icebreakerBar
+                    inputBar
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { navBarContent }
-        // iOS 15: nav bar styled globally in SynergyApp.init()
-        // iOS 16+: restore .toolbarBackground(Color.cosmicDarkAlt, for: .navigationBar)
-        //                   .toolbarColorScheme(.dark, for: .navigationBar)
         .ignoresSafeArea(edges: .bottom)
         .onAppear { vm.openConversation(conversation) }
-        .sheet(isPresented: $showSynastry) {
-            SynastryDetailSheet(item: synastryItem)
-        }
+        .sheet(isPresented: $showSynastry) { SynastryDetailSheet(item: synastryItem) }
+        .sheet(isPresented: $showUnmatchSheet) { unmatchSheet }
+        .sheet(isPresented: $showReportSheet) { reportSheet }
     }
 
-    // MARK: - Status Bar (ASTRO_OS system aesthetic)
+    // MARK: - Status Bar
 
     private var statusBar: some View {
         HStack(spacing: Spacing.md) {
-            // System header
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 10))
@@ -61,21 +68,13 @@ struct ChatView: View {
                     .systemLabel()
                     .foregroundColor(.cosmicSuccess.opacity(0.8))
             }
-
             Spacer()
-
-            // Match score
             MatchScorePill(score: conversation.match.cosmicScore)
-
-            // Synastry button
-            Button {
-                showSynastry = true
-            } label: {
+            Button { showSynastry = true } label: {
                 Text("SYNASTRY")
                     .systemLabel()
                     .foregroundColor(.cosmicCyan)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(Color.cosmicCyan.opacity(0.1))
                     .clipShape(Capsule())
                     .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.3), lineWidth: 1))
@@ -84,9 +83,7 @@ struct ChatView: View {
         .padding(.horizontal, Spacing.xl)
         .padding(.vertical, Spacing.sm)
         .background(Color.cosmicDarkAlt)
-        .overlay(alignment: .bottom) {
-            Divider().overlay(Color.cosmicBorder)
-        }
+        .overlay(alignment: .bottom) { Divider().overlay(Color.cosmicBorder) }
     }
 
     // MARK: - Nav Bar
@@ -95,24 +92,51 @@ struct ChatView: View {
     private var navBarContent: some ToolbarContent {
         ToolbarItem(placement: .principal) {
             HStack(spacing: Spacing.sm) {
-                // Mini avatar
                 ZStack {
-                    Circle()
-                        .fill(LinearGradient.cosmicGradient)
-                        .frame(width: 32, height: 32)
+                    Circle().fill(LinearGradient.cosmicGradient).frame(width: 32, height: 32)
                     Text(conversation.otherUser.displayName.prefix(1))
                         .font(SynergyFont.headlineMedium(14))
                         .foregroundColor(.cosmicDark)
+                    if conversation.otherUser.isOnline {
+                        Circle()
+                            .fill(Color.cosmicSuccess)
+                            .frame(width: 9, height: 9)
+                            .overlay(Circle().strokeBorder(Color.cosmicDarkAlt, lineWidth: 1.5))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    }
                 }
+                .frame(width: 32, height: 32)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(conversation.otherUser.displayName)
                         .font(SynergyFont.headlineMedium(15))
                         .foregroundColor(.cosmicNeutral)
-                    Text(conversation.otherUser.birthChart.sunSign.rawValue + " \(conversation.otherUser.birthChart.sunSign.symbol)")
+                    Text(conversation.otherUser.isOnline ? "Online now" :
+                         conversation.otherUser.birthChart.sunSign.rawValue
+                         + " \(conversation.otherUser.birthChart.sunSign.symbol)")
                         .systemLabel()
-                        .foregroundColor(.cosmicMuted)
+                        .foregroundColor(conversation.otherUser.isOnline ? .cosmicSuccess : .cosmicMuted)
                 }
+            }
+        }
+
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Menu {
+                Button(role: .destructive) { showUnmatchSheet = true } label: {
+                    Label("Unmatch", systemImage: "heart.slash")
+                }
+                Button(role: .destructive) { showReportSheet = true } label: {
+                    Label("Report", systemImage: "flag")
+                }
+                Button(role: .destructive) {
+                    vm.blockUser(conversation.otherUser.id, in: conversation)
+                } label: {
+                    Label("Block", systemImage: "hand.raised")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16))
+                    .foregroundColor(.cosmicMuted)
             }
         }
     }
@@ -123,20 +147,22 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    // Date header
                     Text("TODAY")
                         .systemLabel()
                         .foregroundColor(.cosmicMuted)
                         .padding(.vertical, Spacing.lg)
 
                     ForEach(messages) { message in
-                        MessageBubble(message: message, otherUser: conversation.otherUser)
-                            .id(message.id)
-                            .padding(.horizontal, Spacing.xl)
-                            .padding(.vertical, 3)
+                        MessageBubble(
+                            message: message,
+                            otherUser: conversation.otherUser,
+                            onReact: { emoji in vm.addReaction(emoji, to: message) }
+                        )
+                        .id(message.id)
+                        .padding(.horizontal, Spacing.xl)
+                        .padding(.vertical, 3)
                     }
 
-                    // Typing indicator
                     if vm.isTyping {
                         TypingIndicator(user: conversation.otherUser)
                             .padding(.horizontal, Spacing.xl)
@@ -144,7 +170,6 @@ struct ChatView: View {
                             .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .bottomLeading)))
                     }
 
-                    // Spacer for input bar
                     Color.clear.frame(height: 100).id("bottom")
                 }
                 .padding(.bottom, Spacing.sm)
@@ -156,13 +181,54 @@ struct ChatView: View {
                 }
             }
             .onChange(of: messages.count) { _ in
-                withAnimation(.easeOut(duration: 0.3)) {
-                    proxy.scrollTo("bottom", anchor: .bottom)
-                }
+                withAnimation(.easeOut(duration: 0.3)) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
             .onChange(of: vm.isTyping) { _ in
                 withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
             }
+        }
+    }
+
+    // MARK: - Icebreaker Bar
+
+    @ViewBuilder
+    private var icebreakerBar: some View {
+        if vm.showIcebreakerSuggestions && !vm.icebreakerSuggestions.isEmpty {
+            VStack(spacing: 0) {
+                Divider().overlay(Color.cosmicBorder)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.sm) {
+                        Text("✦")
+                            .font(.system(size: 11))
+                            .foregroundColor(.cosmicCyan.opacity(0.7))
+                            .padding(.leading, Spacing.xl)
+                        ForEach(vm.icebreakerSuggestions, id: \.self) { suggestion in
+                            Button {
+                                vm.messageText = suggestion
+                                vm.dismissIcebreakers()
+                            } label: {
+                                Text(suggestion)
+                                    .font(SynergyFont.body(12))
+                                    .foregroundColor(.cosmicNeutral)
+                                    .padding(.horizontal, Spacing.md)
+                                    .padding(.vertical, 8)
+                                    .background(Color.cosmicCyan.opacity(0.08))
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.25), lineWidth: 1))
+                            }
+                        }
+                        Button { vm.dismissIcebreakers() } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 10))
+                                .foregroundColor(.cosmicMuted)
+                                .padding(.trailing, Spacing.xl)
+                        }
+                    }
+                    .padding(.vertical, Spacing.sm)
+                }
+                .background(Color.cosmicDarkAlt)
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
 
@@ -171,11 +237,10 @@ struct ChatView: View {
     private var inputBar: some View {
         VStack(spacing: 0) {
             Divider().overlay(Color.cosmicBorder)
-
             HStack(spacing: Spacing.md) {
-                // Mic / attachment
                 Button {
-                    // Voice / attachment
+                    isRecordingVoice = true
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 } label: {
                     Image(systemName: "mic.fill")
                         .font(.system(size: 18))
@@ -183,7 +248,6 @@ struct ChatView: View {
                         .frame(width: 36, height: 36)
                 }
 
-                // Text field
                 HStack {
                     TextField("", text: $vm.messageText,
                               prompt: Text("SYNAPSE_INPUT")
@@ -195,6 +259,12 @@ struct ChatView: View {
                     .focused($inputFocused)
                     .submitLabel(.send)
                     .onSubmit { vm.sendMessage() }
+                    .onChange(of: inputFocused) { focused in
+                        if focused { vm.focusedWithEmptyText() }
+                    }
+                    .onChange(of: vm.messageText) { text in
+                        if !text.isEmpty { vm.dismissIcebreakers() }
+                    }
                 }
                 .padding(.horizontal, Spacing.md)
                 .frame(height: 44)
@@ -202,17 +272,13 @@ struct ChatView: View {
                 .clipShape(Capsule())
                 .overlay(Capsule().strokeBorder(Color.cosmicBorder, lineWidth: 1))
 
-                // Send
-                Button {
-                    vm.sendMessage()
-                } label: {
+                Button { vm.sendMessage() } label: {
                     ZStack {
                         Circle()
                             .fill(vm.messageText.isEmpty
                                   ? AnyShapeStyle(Color.cosmicCard)
                                   : AnyShapeStyle(LinearGradient.cosmicGradient))
                             .frame(width: 40, height: 40)
-
                         Text("EXECUTE")
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
                             .foregroundColor(vm.messageText.isEmpty ? .cosmicMuted : .cosmicNeutral)
@@ -224,9 +290,139 @@ struct ChatView: View {
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.vertical, Spacing.md)
-            .padding(.bottom, 24) // safe area
+            .padding(.bottom, 24)
             .background(Color.cosmicDark)
         }
+    }
+
+    // MARK: - Unmatch Sheet
+
+    private var unmatchSheet: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: Spacing.xl) {
+                    Text("Why are you unmatching?")
+                        .font(SynergyFont.headlineMedium(18))
+                        .foregroundColor(.cosmicNeutral)
+                        .padding(.top, Spacing.md)
+
+                    VStack(spacing: Spacing.sm) {
+                        ForEach(UnmatchReason.allCases) { reason in
+                            Button { selectedUnmatchReason = reason } label: {
+                                HStack {
+                                    Text(reason.rawValue)
+                                        .font(SynergyFont.body(15))
+                                        .foregroundColor(.cosmicNeutral)
+                                    Spacer()
+                                    if selectedUnmatchReason == reason {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.cosmicCyan)
+                                    }
+                                }
+                                .padding(Spacing.lg)
+                                .cosmicCard()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Radius.card)
+                                        .strokeBorder(
+                                            selectedUnmatchReason == reason
+                                                ? Color.cosmicCyan.opacity(0.5) : Color.clear,
+                                            lineWidth: 1.5
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    Spacer()
+
+                    CosmicButton("Confirm unmatch", variant: .outlined) {
+                        showUnmatchSheet = false
+                        vm.unmatch(conversation, reason: selectedUnmatchReason)
+                    }
+
+                    Text("They won't be notified of the specific reason.")
+                        .font(SynergyFont.body(12))
+                        .foregroundColor(.cosmicMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(Spacing.xl)
+            }
+            .navigationTitle("Unmatch")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") { showUnmatchSheet = false }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    // MARK: - Report Sheet
+
+    private var reportSheet: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: Spacing.xl) {
+                    Text("What's the issue?")
+                        .font(SynergyFont.headlineMedium(18))
+                        .foregroundColor(.cosmicNeutral)
+                        .padding(.top, Spacing.md)
+
+                    VStack(spacing: Spacing.sm) {
+                        ForEach(ReportReason.allCases) { reason in
+                            Button { selectedReportReason = reason } label: {
+                                HStack {
+                                    Text(reason.rawValue)
+                                        .font(SynergyFont.body(15))
+                                        .foregroundColor(.cosmicNeutral)
+                                    Spacer()
+                                    if selectedReportReason == reason {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.cosmicError)
+                                    }
+                                }
+                                .padding(Spacing.lg)
+                                .cosmicCard()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Radius.card)
+                                        .strokeBorder(
+                                            selectedReportReason == reason
+                                                ? Color.cosmicError.opacity(0.5) : Color.clear,
+                                            lineWidth: 1.5
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    Spacer()
+
+                    CosmicButton("Submit report", variant: .outlined) {
+                        showReportSheet = false
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    }
+
+                    Text("We review all reports within 24 hours.")
+                        .font(SynergyFont.body(12))
+                        .foregroundColor(.cosmicMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(Spacing.xl)
+            }
+            .navigationTitle("Report")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") { showReportSheet = false }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -235,67 +431,144 @@ struct ChatView: View {
 struct MessageBubble: View {
     let message: Message
     let otherUser: User
+    var onReact: ((String) -> Void)? = nil
+
+    @State private var showReactionPicker = false
 
     private var timeString: String {
         let f = DateFormatter(); f.timeStyle = .short
         return f.string(from: message.createdAt)
     }
 
+    private let cosmicEmojis = ["✦", "☽", "♥", "⚡", "✨"]
+
     var body: some View {
-        HStack(alignment: .bottom, spacing: Spacing.sm) {
-            if message.isFromCurrentUser { Spacer(minLength: 60) }
+        VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 2) {
+            HStack(alignment: .bottom, spacing: Spacing.sm) {
+                if message.isFromCurrentUser { Spacer(minLength: 60) }
 
-            if !message.isFromCurrentUser {
-                // Mini avatar for other user
-                Circle()
-                    .fill(LinearGradient.cosmicGradient)
-                    .frame(width: 28, height: 28)
-                    .overlay(
-                        Text(otherUser.displayName.prefix(1))
-                            .font(SynergyFont.body(11, weight: .semibold))
-                            .foregroundColor(.cosmicDark)
-                    )
-            }
+                if !message.isFromCurrentUser {
+                    Circle()
+                        .fill(LinearGradient.cosmicGradient)
+                        .frame(width: 28, height: 28)
+                        .overlay(
+                            Text(otherUser.displayName.prefix(1))
+                                .font(SynergyFont.body(11, weight: .semibold))
+                                .foregroundColor(.cosmicDark)
+                        )
+                }
 
-            VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 4) {
-                // Bubble
-                Text(message.content)
-                    .font(SynergyFont.body(15))
-                    .foregroundColor(.cosmicNeutral)
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, 10)
-                    .background {
+                VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 4) {
+                    bubbleContent
+                        .onLongPressGesture {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            withAnimation(.spring(response: 0.3)) { showReactionPicker.toggle() }
+                        }
+
+                    HStack(spacing: 4) {
+                        Text(timeString)
+                            .systemLabel()
+                            .foregroundColor(.cosmicMuted.opacity(0.6))
                         if message.isFromCurrentUser {
-                            LinearGradient.cosmicGradient.opacity(0.85)
-                        } else {
-                            Color(hex: "#1E2229")
+                            Image(systemName: message.isRead ? "checkmark.circle.fill" : "checkmark.circle")
+                                .font(.system(size: 9))
+                                .foregroundColor(message.isRead ? .cosmicCyan : .cosmicMuted)
                         }
                     }
-                    .clipShape(ChatBubbleShape(isFromCurrentUser: message.isFromCurrentUser))
-
-                // Timestamp + read receipt
-                HStack(spacing: 4) {
-                    Text(timeString)
-                        .systemLabel()
-                        .foregroundColor(.cosmicMuted.opacity(0.6))
-                    if message.isFromCurrentUser {
-                        Image(systemName: message.isRead ? "checkmark.circle.fill" : "checkmark.circle")
-                            .font(.system(size: 9))
-                            .foregroundColor(message.isRead ? .cosmicCyan : .cosmicMuted)
-                    }
                 }
+
+                if !message.isFromCurrentUser { Spacer(minLength: 60) }
             }
 
-            if !message.isFromCurrentUser { Spacer(minLength: 60) }
+            // Existing reactions row
+            if !message.reactions.isEmpty {
+                reactionRow
+                    .padding(.leading, message.isFromCurrentUser ? 0 : 40)
+            }
+
+            // Reaction picker
+            if showReactionPicker {
+                reactionPicker
+                    .transition(.scale(scale: 0.7,
+                        anchor: message.isFromCurrentUser ? .bottomTrailing : .bottomLeading)
+                        .combined(with: .opacity))
+                    .padding(.leading, message.isFromCurrentUser ? 0 : 40)
+            }
         }
     }
-}
 
-// MARK: - Incoming bubble background fix
+    @ViewBuilder
+    private var bubbleContent: some View {
+        if message.isVoiceNote {
+            VoiceNotePlayerView(
+                duration: message.voiceDuration ?? 5,
+                isFromCurrentUser: message.isFromCurrentUser
+            )
+            .frame(maxWidth: 220)
+        } else {
+            Text(message.content)
+                .font(SynergyFont.body(15))
+                .foregroundColor(.cosmicNeutral)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, 10)
+                .background {
+                    if message.isFromCurrentUser {
+                        LinearGradient.cosmicGradient.opacity(0.85)
+                    } else {
+                        Color(hex: "#1E2229")
+                    }
+                }
+                .clipShape(ChatBubbleShape(isFromCurrentUser: message.isFromCurrentUser))
+        }
+    }
 
-extension MessageBubble {
-    // Override background for incoming bubbles (can't use conditional gradient)
-    private var incomingBg: Color { Color(hex: "#1E2229") }
+    private var reactionRow: some View {
+        HStack(spacing: 4) {
+            ForEach(message.reactions.sorted(by: { $0.key < $1.key }), id: \.key) { emoji, count in
+                Button { onReact?(emoji) } label: {
+                    HStack(spacing: 3) {
+                        Text(emoji).font(.system(size: 13))
+                        if count > 1 {
+                            Text("\(count)")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.cosmicMuted)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.cosmicDarkAlt)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(Color.cosmicBorder, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.bottom, 2)
+    }
+
+    private var reactionPicker: some View {
+        HStack(spacing: Spacing.sm) {
+            ForEach(cosmicEmojis, id: \.self) { emoji in
+                Button {
+                    onReact?(emoji)
+                    withAnimation { showReactionPicker = false }
+                } label: {
+                    Text(emoji)
+                        .font(.system(size: 20))
+                        .frame(width: 36, height: 36)
+                        .background(Color.cosmicCard)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(Color.cosmicBorder, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(Spacing.sm)
+        .background(Color.cosmicDarkAlt)
+        .clipShape(Capsule())
+        .overlay(Capsule().strokeBorder(Color.cosmicBorder, lineWidth: 1))
+        .cardShadow()
+    }
 }
 
 // MARK: - Custom Bubble Shape
@@ -307,11 +580,8 @@ struct ChatBubbleShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let r = cornerRadius
-        let t = tailRadius
-
+        let r = cornerRadius; let t = tailRadius
         if isFromCurrentUser {
-            // Round all corners, small tail bottom-right
             path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
             path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
             path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.minY + r), radius: r, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
@@ -322,7 +592,6 @@ struct ChatBubbleShape: Shape {
             path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
             path.addArc(center: CGPoint(x: rect.minX + r, y: rect.minY + r), radius: r, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
         } else {
-            // Tail bottom-left
             path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
             path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
             path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.minY + r), radius: r, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)

@@ -4,11 +4,10 @@ import SwiftUI
 
 struct ConversationsView: View {
     @EnvironmentObject var vm: ChatViewModel
-    @State private var showChatView = false
+    @State private var convToUnmatch: Conversation? = nil
+    @State private var selectedUnmatchReason: UnmatchReason? = nil
 
     var body: some View {
-        // iOS 15: NavigationView + .navigationViewStyle(.stack)
-        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
         NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
@@ -30,6 +29,9 @@ struct ConversationsView: View {
             .navigationBarHidden(true)
         }
         .navigationViewStyle(.stack)
+        .sheet(item: $convToUnmatch) { conv in
+            unmatchSheet(for: conv)
+        }
     }
 
     // MARK: - Nav Bar
@@ -59,8 +61,6 @@ struct ConversationsView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(vm.conversations) { conv in
-                    // iOS 15: NavigationLink for programmatic push
-                    // iOS 16+: restore .navigationDestination(item:) on NavigationStack
                     NavigationLink(destination:
                         ChatView(conversation: conv)
                             .environmentObject(vm)
@@ -69,6 +69,18 @@ struct ConversationsView: View {
                     }
                     .buttonStyle(.plain)
                     .simultaneousGesture(TapGesture().onEnded { vm.openConversation(conv) })
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            convToUnmatch = conv
+                        } label: {
+                            Label("Unmatch", systemImage: "heart.slash")
+                        }
+                        Button(role: .destructive) {
+                            vm.blockUser(conv.otherUser.id, in: conv)
+                        } label: {
+                            Label("Block", systemImage: "hand.raised")
+                        }
+                    }
 
                     Divider()
                         .overlay(Color.cosmicBorder.opacity(0.5))
@@ -77,6 +89,76 @@ struct ConversationsView: View {
             }
             .padding(.bottom, 100)
         }
+    }
+
+    // MARK: - Unmatch Sheet
+
+    private func unmatchSheet(for conv: Conversation) -> some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: Spacing.xl) {
+                    Text("Why are you unmatching \(conv.otherUser.displayName)?")
+                        .font(SynergyFont.headlineMedium(18))
+                        .foregroundColor(.cosmicNeutral)
+                        .padding(.top, Spacing.md)
+
+                    VStack(spacing: Spacing.sm) {
+                        ForEach(UnmatchReason.allCases) { reason in
+                            Button { selectedUnmatchReason = reason } label: {
+                                HStack {
+                                    Text(reason.rawValue)
+                                        .font(SynergyFont.body(15))
+                                        .foregroundColor(.cosmicNeutral)
+                                    Spacer()
+                                    if selectedUnmatchReason == reason {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.cosmicCyan)
+                                    }
+                                }
+                                .padding(Spacing.lg)
+                                .cosmicCard()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Radius.card)
+                                        .strokeBorder(
+                                            selectedUnmatchReason == reason
+                                                ? Color.cosmicCyan.opacity(0.5) : Color.clear,
+                                            lineWidth: 1.5
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    Spacer()
+
+                    CosmicButton("Confirm unmatch", variant: .outlined) {
+                        vm.unmatch(conv, reason: selectedUnmatchReason)
+                        convToUnmatch = nil
+                        selectedUnmatchReason = nil
+                    }
+
+                    Text("They won't be notified of the specific reason.")
+                        .font(SynergyFont.body(12))
+                        .foregroundColor(.cosmicMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(Spacing.xl)
+            }
+            .navigationTitle("Unmatch")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        convToUnmatch = nil
+                        selectedUnmatchReason = nil
+                    }
+                    .foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Empty
@@ -116,25 +198,52 @@ struct ConversationRow: View {
 
     var body: some View {
         HStack(spacing: Spacing.md) {
-            // Avatar
             avatarView
 
-            // Content
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(conversation.otherUser.displayName)
                         .font(SynergyFont.headlineMedium(16))
                         .foregroundColor(.cosmicNeutral)
 
+                    // Streak badge
+                    if conversation.streakDays >= 3 {
+                        HStack(spacing: 2) {
+                            Text("✦")
+                                .font(.system(size: 9))
+                            Text("\(conversation.streakDays)d")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        }
+                        .foregroundColor(.cosmicCyan)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.cosmicCyan.opacity(0.12))
+                        .clipShape(Capsule())
+                    }
+
                     Spacer()
 
-                    Text(timeString)
-                        .systemLabel()
-                        .foregroundColor(.cosmicMuted)
+                    // Expiry countdown (if < 24h)
+                    if let hours = conversation.hoursUntilExpiry, hours < 24 {
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 9))
+                            Text("\(hours)h")
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        }
+                        .foregroundColor(.cosmicError)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.cosmicError.opacity(0.1))
+                        .clipShape(Capsule())
+                    } else {
+                        Text(timeString)
+                            .systemLabel()
+                            .foregroundColor(.cosmicMuted)
+                    }
                 }
 
                 HStack(spacing: 6) {
-                    // Cosmic score pill
                     MatchScorePill(score: conversation.match.cosmicScore, showLabel: false)
 
                     Text(conversation.previewText)
@@ -145,7 +254,6 @@ struct ConversationRow: View {
                 }
             }
 
-            // Unread badge
             if conversation.unreadCount > 0 {
                 Text("\(conversation.unreadCount)")
                     .font(.system(size: 11, weight: .bold))
@@ -180,7 +288,6 @@ struct ConversationRow: View {
                 .font(SynergyFont.headline(20))
                 .foregroundColor(.cosmicNeutral)
 
-            // Online indicator
             if conversation.otherUser.isOnline {
                 Circle()
                     .fill(Color.cosmicSuccess)
