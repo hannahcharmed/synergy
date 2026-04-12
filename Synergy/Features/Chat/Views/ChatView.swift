@@ -8,9 +8,22 @@ struct ChatView: View {
     @EnvironmentObject var vm: ChatViewModel
     @FocusState private var inputFocused: Bool
     @State private var scrollProxy: ScrollViewProxy? = nil
+    @State private var showSynastry = false
 
     private var messages: [Message] {
         vm.activeConversation?.messages ?? conversation.messages
+    }
+
+    // Build a FeedItem from the conversation's match for SynastryDetailSheet
+    private var synastryItem: FeedItem {
+        FeedItem(
+            id: conversation.match.id,
+            user: conversation.otherUser,
+            cosmicScore: conversation.match.cosmicScore,
+            highlights: conversation.match.scoreHighlights,
+            aiIcebreaker: conversation.match.aiIcebreaker ?? "Ask them about their moon sign.",
+            transitBoost: nil
+        )
     }
 
     var body: some View {
@@ -18,13 +31,8 @@ struct ChatView: View {
             Color.cosmicDark.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Status bar (ASTRO_OS)
                 statusBar
-
-                // Messages
                 messageList
-
-                // Input bar
                 inputBar
             }
         }
@@ -35,6 +43,9 @@ struct ChatView: View {
         //                   .toolbarColorScheme(.dark, for: .navigationBar)
         .ignoresSafeArea(edges: .bottom)
         .onAppear { vm.openConversation(conversation) }
+        .sheet(isPresented: $showSynastry) {
+            SynastryDetailSheet(item: synastryItem)
+        }
     }
 
     // MARK: - Status Bar (ASTRO_OS system aesthetic)
@@ -58,7 +69,7 @@ struct ChatView: View {
 
             // Synastry button
             Button {
-                // Show synastry sheet
+                showSynastry = true
             } label: {
                 Text("SYNASTRY")
                     .systemLabel()

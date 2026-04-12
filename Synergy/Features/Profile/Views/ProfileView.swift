@@ -6,8 +6,15 @@ struct ProfileView: View {
     @EnvironmentObject var vm: ProfileViewModel
     @EnvironmentObject var coordinator: AppCoordinator
 
+    // Tracks which settings sheet is active
+    @State private var activeSettings: SettingsDestination? = nil
+
+    enum SettingsDestination: String, Identifiable {
+        case notifications, discovery, privacy, help
+        var id: String { rawValue }
+    }
+
     var body: some View {
-        // iOS 15: NavigationView; iOS 16+: replace with NavigationStack
         NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
@@ -27,8 +34,15 @@ struct ProfileView: View {
                 }
             }
             .sheet(isPresented: $vm.showPaywall) {
-                PaywallView()
+                PaywallView().environmentObject(vm)
+            }
+            .sheet(isPresented: $vm.showSettings) {
+                SettingsMenuSheet()
                     .environmentObject(vm)
+                    .environmentObject(coordinator)
+            }
+            .sheet(item: $activeSettings) { dest in
+                settingsSheet(for: dest)
             }
             .navigationBarHidden(true)
         }
@@ -59,7 +73,6 @@ struct ProfileView: View {
 
     private func tierBadge(user: User) -> some View {
         HStack {
-            // Avatar
             ZStack {
                 Circle()
                     .fill(LinearGradient.cosmicGradient)
@@ -78,7 +91,6 @@ struct ProfileView: View {
                     .font(SynergyFont.body(13))
                     .foregroundColor(.cosmicMuted)
 
-                // Tier pill
                 HStack(spacing: 4) {
                     Image(systemName: user.subscriptionTier.icon)
                         .font(.system(size: 11))
@@ -105,44 +117,30 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Upgrade CTA (if free tier)
-
     // MARK: - Birth Chart Summary
 
     private func chartSummaryCard(user: User) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                Text("NATAL_CHART")
-                    .systemLabel()
+                Text("NATAL_CHART").systemLabel()
                 Spacer()
-                Text("PLACIDUS")
-                    .systemLabel()
-                    .foregroundColor(.cosmicMuted.opacity(0.5))
+                Text("PLACIDUS").systemLabel().foregroundColor(.cosmicMuted.opacity(0.5))
             }
 
-            // Big three
             HStack(spacing: 0) {
                 ForEach([
-                    ("☉", "Sun", user.birthChart.sunSign.rawValue),
-                    ("☽", "Moon", user.birthChart.moonSign.rawValue),
+                    ("☉", "Sun",    user.birthChart.sunSign.rawValue),
+                    ("☽", "Moon",   user.birthChart.moonSign.rawValue),
                     ("AC", "Rising", user.birthChart.risingSign.rawValue),
                 ], id: \.1) { symbol, label, value in
                     VStack(spacing: 4) {
-                        Text(symbol)
-                            .font(.system(size: 20))
-                            .foregroundColor(.cosmicCyan)
-                        Text(value)
-                            .font(SynergyFont.headlineMedium(14))
-                            .foregroundColor(.cosmicNeutral)
-                        Text(label.uppercased())
-                            .systemLabel()
+                        Text(symbol).font(.system(size: 20)).foregroundColor(.cosmicCyan)
+                        Text(value).font(SynergyFont.headlineMedium(14)).foregroundColor(.cosmicNeutral)
+                        Text(label.uppercased()).systemLabel()
                     }
                     .frame(maxWidth: .infinity)
-
                     if label != "Rising" {
-                        Divider()
-                            .overlay(Color.cosmicBorder)
-                            .frame(height: 40)
+                        Divider().overlay(Color.cosmicBorder).frame(height: 40)
                     }
                 }
             }
@@ -150,7 +148,6 @@ struct ProfileView: View {
 
             Divider().overlay(Color.cosmicBorder)
 
-            // Planetary positions list
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.sm) {
                 ForEach(user.birthChart.positions.prefix(8)) { pos in
                     HStack(spacing: 6) {
@@ -177,8 +174,7 @@ struct ProfileView: View {
 
     private func bioCard(user: User) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            Text("PROFILE_DATA")
-                .systemLabel()
+            Text("PROFILE_DATA").systemLabel()
 
             if let bio = user.profile.bio {
                 Text(bio)
@@ -195,7 +191,6 @@ struct ProfileView: View {
                 }
             }
 
-            // Intentions
             if !user.profile.intentionTags.isEmpty {
                 HStack(spacing: Spacing.sm) {
                     ForEach(user.profile.intentionTags) { tag in
@@ -216,7 +211,6 @@ struct ProfileView: View {
 
     private var settingsSection: some View {
         VStack(spacing: Spacing.sm) {
-            // Upgrade button (free tier)
             if vm.user?.subscriptionTier == .stardust {
                 Button { vm.showPaywall = true } label: {
                     HStack {
@@ -234,10 +228,8 @@ struct ProfileView: View {
                     .background(
                         RoundedRectangle(cornerRadius: Radius.md)
                             .fill(Color.cosmicCard)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Radius.md)
-                                    .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 1.5)
-                            )
+                            .overlay(RoundedRectangle(cornerRadius: Radius.md)
+                                .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 1.5))
                     )
                 }
                 .buttonStyle(.plain)
@@ -265,7 +257,17 @@ struct ProfileView: View {
 
     private func settingsRow(_ row: SettingsRow) -> some View {
         Button {
-            if row.title == "Sign out" { coordinator.signOut() }
+            switch row.title {
+            case "Notifications":
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            case "Discovery settings": activeSettings = .discovery
+            case "Privacy":            activeSettings = .privacy
+            case "Help & Support":     activeSettings = .help
+            case "Sign out":           coordinator.signOut()
+            default: break
+            }
         } label: {
             HStack {
                 Image(systemName: row.icon)
@@ -276,13 +278,238 @@ struct ProfileView: View {
                     .font(SynergyFont.body(15))
                     .foregroundColor(row.destructive ? .cosmicError : .cosmicNeutral)
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(.cosmicMuted)
+                if !row.destructive {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(.cosmicMuted)
+                }
             }
             .padding(Spacing.lg)
             .cosmicCard()
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func settingsSheet(for dest: SettingsDestination) -> some View {
+        switch dest {
+        case .discovery: DiscoverySettingsSheet()
+        case .privacy:   PlaceholderSettingsSheet(title: "Privacy", icon: "lock.shield.fill", message: "Manage who can see your profile and how your data is used. Full privacy controls coming soon.")
+        case .help:      PlaceholderSettingsSheet(title: "Help & Support", icon: "questionmark.circle", message: "For support, email us at hello@synergy.app\n\nWe typically respond within 24 hours.")
+        case .notifications: EmptyView()
+        }
+    }
+}
+
+// MARK: - Settings Menu Sheet (gear button)
+
+struct SettingsMenuSheet: View {
+    @EnvironmentObject var vm: ProfileViewModel
+    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: Spacing.lg) {
+                    if let user = vm.user {
+                        // Account info
+                        HStack(spacing: Spacing.md) {
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient.cosmicGradient)
+                                    .frame(width: 56, height: 56)
+                                Text(user.displayName.prefix(1))
+                                    .font(SynergyFont.headline(24))
+                                    .foregroundColor(.cosmicDark)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.displayName)
+                                    .font(SynergyFont.headline(18))
+                                    .foregroundColor(.cosmicNeutral)
+                                Text(user.subscriptionTier.displayName + " member")
+                                    .font(SynergyFont.body(13))
+                                    .foregroundColor(.cosmicMuted)
+                            }
+                        }
+                        .padding(.bottom, Spacing.sm)
+                    }
+
+                    Divider().overlay(Color.cosmicBorder)
+
+                    // App version
+                    HStack {
+                        Text("VERSION")
+                            .systemLabel()
+                        Spacer()
+                        Text("1.0.0 (mock)")
+                            .font(SynergyFont.body(13))
+                            .foregroundColor(.cosmicMuted)
+                    }
+                    .padding(.horizontal, Spacing.lg)
+
+                    Spacer()
+
+                    // Sign out
+                    CosmicButton("Sign out", variant: .outlined) {
+                        dismiss()
+                        coordinator.signOut()
+                    }
+                }
+                .padding(Spacing.xl)
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+}
+
+// MARK: - Discovery Settings Sheet
+
+struct DiscoverySettingsSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var maxDistance: Double = 25
+    @State private var minAge: Double = 22
+    @State private var maxAge: Double = 35
+    @State private var showVerifiedOnly = false
+    @State private var showActiveOnly  = true
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Spacing.xl) {
+
+                        // Distance
+                        settingGroup(title: "MAX_DISTANCE") {
+                            VStack(spacing: Spacing.sm) {
+                                HStack {
+                                    Text("Within \(Int(maxDistance)) miles")
+                                        .font(SynergyFont.body(15))
+                                        .foregroundColor(.cosmicNeutral)
+                                    Spacer()
+                                }
+                                Slider(value: $maxDistance, in: 5...100, step: 5)
+                                    .tint(.cosmicCyan)
+                            }
+                        }
+
+                        // Age range
+                        settingGroup(title: "AGE_RANGE") {
+                            VStack(spacing: Spacing.sm) {
+                                HStack {
+                                    Text("\(Int(minAge)) – \(Int(maxAge)) years")
+                                        .font(SynergyFont.body(15))
+                                        .foregroundColor(.cosmicNeutral)
+                                    Spacer()
+                                }
+                                HStack(spacing: Spacing.md) {
+                                    Text("Min")
+                                        .systemLabel()
+                                        .frame(width: 28)
+                                    Slider(value: $minAge, in: 18...maxAge - 1, step: 1)
+                                        .tint(.cosmicPurple)
+                                }
+                                HStack(spacing: Spacing.md) {
+                                    Text("Max")
+                                        .systemLabel()
+                                        .frame(width: 28)
+                                    Slider(value: $maxAge, in: minAge + 1...65, step: 1)
+                                        .tint(.cosmicPurple)
+                                }
+                            }
+                        }
+
+                        // Toggles
+                        settingGroup(title: "FILTERS") {
+                            VStack(spacing: 0) {
+                                toggleRow(label: "Verified profiles only", isOn: $showVerifiedOnly)
+                                Divider().overlay(Color.cosmicBorder)
+                                toggleRow(label: "Active in last 7 days", isOn: $showActiveOnly)
+                            }
+                        }
+
+                        CosmicButton("Save preferences", variant: .gradient) { dismiss() }
+                    }
+                    .padding(Spacing.xl)
+                }
+            }
+            .navigationTitle("Discovery")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    private func settingGroup<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text(title).systemLabel()
+            content()
+                .padding(Spacing.lg)
+                .cosmicCard()
+        }
+    }
+
+    private func toggleRow(label: String, isOn: Binding<Bool>) -> some View {
+        HStack {
+            Text(label)
+                .font(SynergyFont.body(15))
+                .foregroundColor(.cosmicNeutral)
+            Spacer()
+            Toggle("", isOn: isOn)
+                .tint(.cosmicCyan)
+                .labelsHidden()
+        }
+        .padding(.vertical, Spacing.sm)
+    }
+}
+
+// MARK: - Placeholder Sheet (Privacy / Help)
+
+struct PlaceholderSettingsSheet: View {
+    let title: String
+    let icon: String
+    let message: String
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(spacing: Spacing.xl) {
+                    Spacer()
+                    Image(systemName: icon)
+                        .font(.system(size: 48))
+                        .foregroundColor(.cosmicMuted.opacity(0.5))
+                    Text(message)
+                        .font(SynergyFont.body(15))
+                        .foregroundColor(.cosmicMuted)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(5)
+                        .padding(.horizontal, Spacing.xl)
+                    Spacer()
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }.foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
     }
 }
