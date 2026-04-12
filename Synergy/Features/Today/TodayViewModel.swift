@@ -21,6 +21,15 @@ final class TodayViewModel: ObservableObject {
         }
     }
 
+    func refresh() async {
+        isLoading = true
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        horoscope = MockDataService.shared.fetchTodayHoroscope()
+        ritualEvents = MockDataService.shared.fetchRitualEvents()
+        alignedMatches = MockDataService.shared.fetchFeed(limit: 3)
+        isLoading = false
+    }
+
     var activeRituals: [RitualEvent] {
         ritualEvents.filter { $0.isActive }
     }

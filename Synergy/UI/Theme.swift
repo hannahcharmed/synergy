@@ -3,25 +3,33 @@ import SwiftUI
 // MARK: - Brand Colors
 
 extension Color {
-    // Core palette — from brand guide
-    static let cosmicDark      = Color(hex: "#202124")   // Primary background
-    static let cosmicCyan      = Color(hex: "#00F0FF")   // Secondary / accent
-    static let cosmicPurple    = Color(hex: "#7D5FFF")   // Tertiary / cosmic
-    static let cosmicNeutral   = Color(hex: "#F8F9FA")   // Light text / surfaces
+
+    // Adaptive helper — creates a color that responds to dark/light mode
+    static func adaptive(dark darkHex: String, light lightHex: String) -> Color {
+        Color(UIColor { trait in
+            UIColor(Color(hex: trait.userInterfaceStyle == .dark ? darkHex : lightHex))
+        })
+    }
+
+    // Core palette
+    static let cosmicDark    = adaptive(dark: "#202124", light: "#F5F0FF")
+    static let cosmicCyan    = Color(hex: "#00F0FF")   // works on both modes
+    static let cosmicPurple  = Color(hex: "#7D5FFF")   // works on both modes
+    static let cosmicNeutral = adaptive(dark: "#F8F9FA", light: "#1A1525")
 
     // Extended
-    static let cosmicDarkAlt   = Color(hex: "#16181A")   // Deeper background
-    static let cosmicCard      = Color(hex: "#1E2023")   // Card surface
-    static let cosmicBorder    = Color(hex: "#2C2F33")   // Subtle borders
-    static let cosmicMuted     = Color(hex: "#6B7280")   // Muted text
-    static let cosmicError     = Color(hex: "#FF4D6A")   // Error / destructive
-    static let cosmicSuccess   = Color(hex: "#00D68F")   // Success / matched
+    static let cosmicDarkAlt = adaptive(dark: "#16181A", light: "#EDE5FA")
+    static let cosmicCard    = adaptive(dark: "#1E2023", light: "#FFFFFF")
+    static let cosmicBorder  = adaptive(dark: "#2C2F33", light: "#D9CEF0")
+    static let cosmicMuted   = adaptive(dark: "#6B7280", light: "#6B5E8A")
+    static let cosmicError   = Color(hex: "#FF4D6A")
+    static let cosmicSuccess = Color(hex: "#00D68F")
 
-    // Semantic
-    static let cosmicFire      = Color(hex: "#FF6B35")   // Fire signs
-    static let cosmicEarth     = Color(hex: "#7AB648")   // Earth signs
-    static let cosmicAir       = Color(hex: "#00C2FF")   // Air signs
-    static let cosmicWater     = Color(hex: "#7D5FFF")   // Water signs
+    // Semantic element colours
+    static let cosmicFire  = Color(hex: "#FF6B35")
+    static let cosmicEarth = Color(hex: "#7AB648")
+    static let cosmicAir   = Color(hex: "#00C2FF")
+    static let cosmicWater = Color(hex: "#7D5FFF")
 
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -52,7 +60,7 @@ extension LinearGradient {
     )
 
     static let cosmicVertical = LinearGradient(
-        colors: [.cosmicPurple.opacity(0.8), .cosmicCyan.opacity(0.8)],
+        colors: [Color.cosmicPurple.opacity(0.8), Color.cosmicCyan.opacity(0.8)],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -64,7 +72,7 @@ extension LinearGradient {
     )
 
     static let cardShimmer = LinearGradient(
-        colors: [.cosmicCard, Color(hex: "#252830"), .cosmicCard],
+        colors: [.cosmicCard, Color.adaptive(dark: "#252830", light: "#F0EBF8"), .cosmicCard],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -75,8 +83,13 @@ extension LinearGradient {
         endPoint: .trailing
     )
 
+    // Adaptive: deep cosmic dark → purple-tinted dark (dark) / soft lavender (light)
     static let onboardingBg = LinearGradient(
-        colors: [Color(hex: "#0D0E10"), Color(hex: "#16181F"), Color(hex: "#1A1328")],
+        colors: [
+            Color.cosmicDarkAlt,
+            Color.cosmicDark,
+            Color.adaptive(dark: "#1A1328", light: "#DDD5F0"),
+        ],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -85,27 +98,27 @@ extension LinearGradient {
 // MARK: - Spacing
 
 enum Spacing {
-    static let xs:  CGFloat = 4
-    static let sm:  CGFloat = 8
-    static let md:  CGFloat = 16
-    static let lg:  CGFloat = 24
-    static let xl:  CGFloat = 32
-    static let xxl: CGFloat = 48
+    static let xs:   CGFloat = 4
+    static let sm:   CGFloat = 8
+    static let md:   CGFloat = 16
+    static let lg:   CGFloat = 24
+    static let xl:   CGFloat = 32
+    static let xxl:  CGFloat = 48
     static let xxxl: CGFloat = 64
 }
 
 // MARK: - Corner Radius
 
 enum Radius {
-    static let sm:  CGFloat = 8
-    static let md:  CGFloat = 12
-    static let lg:  CGFloat = 16
-    static let xl:  CGFloat = 24
+    static let sm:   CGFloat = 8
+    static let md:   CGFloat = 12
+    static let lg:   CGFloat = 16
+    static let xl:   CGFloat = 24
     static let card: CGFloat = 20
     static let pill: CGFloat = 100
 }
 
-// MARK: - Shadow
+// MARK: - Glow / Shadow
 
 extension View {
     func cosmicGlow(color: Color = .cosmicCyan, radius: CGFloat = 12) -> some View {
@@ -132,21 +145,14 @@ struct GlassCard: ViewModifier {
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(Color.white.opacity(opacity))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.15), Color.white.opacity(0.04)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    )
+                    .overlay(RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.white.opacity(opacity)))
+                    .overlay(RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.15), Color.white.opacity(0.04)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1))
             )
     }
 }
@@ -159,10 +165,8 @@ struct CosmicCard: ViewModifier {
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(Color.cosmicCard)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .strokeBorder(Color.cosmicBorder, lineWidth: 1)
-                    )
+                    .overlay(RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(Color.cosmicBorder, lineWidth: 1))
             )
     }
 }

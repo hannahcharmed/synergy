@@ -29,19 +29,38 @@ import SwiftUI
 struct SynergyApp: App {
     @StateObject private var currentUser = CurrentUser()
     @StateObject private var appCoordinator = AppCoordinator()
+    @AppStorage("colorScheme") private var colorSchemePreference: String = "dark"
+
+    private var preferredScheme: ColorScheme? {
+        switch colorSchemePreference {
+        case "light":  return .light
+        case "dark":   return .dark
+        default:       return nil      // "system" — follow device
+        }
+    }
 
     init() {
-        // Global nav bar appearance — dark cosmic style
+        // Global nav bar appearance — adapts to color scheme
         // (iOS 16 equivalent: .toolbarBackground + .toolbarColorScheme per-view)
+        let navBg = UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: "#16181A"))
+                : UIColor(Color(hex: "#EDE5FA"))
+        }
+        let navFg = UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: "#F8F9FA"))
+                : UIColor(Color(hex: "#1A1525"))
+        }
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Color.cosmicDarkAlt)
-        appearance.titleTextAttributes = [.foregroundColor: UIColor(Color.cosmicNeutral)]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(Color.cosmicNeutral)]
+        appearance.backgroundColor = navBg
+        appearance.titleTextAttributes = [.foregroundColor: navFg]
+        appearance.largeTitleTextAttributes = [.foregroundColor: navFg]
         UINavigationBar.appearance().standardAppearance  = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance   = appearance
-        UINavigationBar.appearance().tintColor = UIColor(Color.cosmicCyan)
+        UINavigationBar.appearance().tintColor = UIColor(Color(hex: "#00F0FF"))
 
         // Transparent TextEditor background
         // (iOS 16 equivalent: .scrollContentBackground(.hidden) per TextEditor)
@@ -53,7 +72,7 @@ struct SynergyApp: App {
             AppRootView()
                 .environmentObject(currentUser)
                 .environmentObject(appCoordinator)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(preferredScheme)
                 .tint(.cosmicCyan)
         }
     }

@@ -39,6 +39,7 @@ struct TodayView: View {
                         }
                         .padding(.horizontal, Spacing.xl)
                     }
+                    .refreshable { await vm.refresh() }
                 }
             }
             .sheet(item: $selectedRitual) { ritual in
