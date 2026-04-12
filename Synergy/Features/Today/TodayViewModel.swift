@@ -1,6 +1,29 @@
 import SwiftUI
 import Combine
 
+// MARK: - Transit Alert
+
+struct TransitAlert: Identifiable {
+    let id = UUID()
+    let planet: String
+    let description: String
+    let affectedSign: String
+    let boostPercent: Int           // +N% on cosmic scores
+    let expiresAt: Date
+    var isExpired: Bool { Date() > expiresAt }
+}
+
+// MARK: - Weekly Synastry Report Entry
+
+struct WeeklyReportEntry: Identifiable {
+    let id = UUID()
+    let matchName: String
+    let cosmicScore: Int
+    let weeklyInsight: String
+    let bestDay: String
+    let transitNote: String
+}
+
 @MainActor
 final class TodayViewModel: ObservableObject {
     @Published var horoscope: Horoscope? = nil
@@ -9,7 +32,24 @@ final class TodayViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var selectedRitual: RitualEvent? = nil
 
-    init() { loadToday() }
+    // Transit alert banner (dismissible)
+    @Published var activeTransitAlert: TransitAlert? = nil
+    @Published var showTransitAlert = true
+
+    // Mercury retrograde
+    @Published var isMercuryRetrograde = false
+
+    // Weekly synastry report (shown on Mon/mock always)
+    @Published var weeklyReport: [WeeklyReportEntry] = []
+    @Published var showWeeklyReport = false
+
+    // Cosmic streak (days opened in a row — persisted via UserDefaults)
+    @Published var streakDays: Int = 0
+
+    init() {
+        loadStreak()
+        loadToday()
+    }
 
     func loadToday() {
         isLoading = true
@@ -17,6 +57,9 @@ final class TodayViewModel: ObservableObject {
             self.horoscope = MockDataService.shared.fetchTodayHoroscope()
             self.ritualEvents = MockDataService.shared.fetchRitualEvents()
             self.alignedMatches = MockDataService.shared.fetchFeed(limit: 3)
+            self.isMercuryRetrograde = self.checkMercuryRetrograde()
+            self.activeTransitAlert = self.buildTransitAlert()
+            self.weeklyReport = self.buildWeeklyReport()
             self.isLoading = false
         }
     }
@@ -27,14 +70,83 @@ final class TodayViewModel: ObservableObject {
         horoscope = MockDataService.shared.fetchTodayHoroscope()
         ritualEvents = MockDataService.shared.fetchRitualEvents()
         alignedMatches = MockDataService.shared.fetchFeed(limit: 3)
+        activeTransitAlert = buildTransitAlert()
         isLoading = false
     }
 
-    var activeRituals: [RitualEvent] {
-        ritualEvents.filter { $0.isActive }
+    func dismissTransitAlert() {
+        withAnimation { showTransitAlert = false }
     }
 
-    var upcomingRituals: [RitualEvent] {
-        ritualEvents.filter { !$0.isActive }
+    var activeRituals: [RitualEvent] { ritualEvents.filter { $0.isActive } }
+    var upcomingRituals: [RitualEvent] { ritualEvents.filter { !$0.isActive } }
+
+    // MARK: - Streak
+
+    private func loadStreak() {
+        let key = "lastOpenedDate"
+        let today = Calendar.current.startOfDay(for: Date())
+        if let stored = UserDefaults.standard.object(forKey: key) as? Date {
+            let lastDay = Calendar.current.startOfDay(for: stored)
+            let diff = Calendar.current.dateComponents([.day], from: lastDay, to: today).day ?? 0
+            if diff == 0 {
+                streakDays = UserDefaults.standard.integer(forKey: "streakDays")
+            } else if diff == 1 {
+                streakDays = UserDefaults.standard.integer(forKey: "streakDays") + 1
+                UserDefaults.standard.set(streakDays, forKey: "streakDays")
+            } else {
+                streakDays = 1
+                UserDefaults.standard.set(1, forKey: "streakDays")
+            }
+        } else {
+            streakDays = 1
+            UserDefaults.standard.set(1, forKey: "streakDays")
+        }
+        UserDefaults.standard.set(Date(), forKey: key)
+    }
+
+    // MARK: - Mercury Retrograde (mock: check active rituals for retrograde type)
+
+    private func checkMercuryRetrograde() -> Bool {
+        ritualEvents.contains { $0.type == .retrograde && $0.isActive }
+    }
+
+    // MARK: - Transit Alert (mock)
+
+    private func buildTransitAlert() -> TransitAlert? {
+        guard let h = horoscope else { return nil }
+        return TransitAlert(
+            planet: "Venus",
+            description: h.cosmicWeather.dominantTransit,
+            affectedSign: "Scorpio",
+            boostPercent: 15,
+            expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()) ?? Date()
+        )
+    }
+
+    // MARK: - Weekly Report (mock)
+
+    private func buildWeeklyReport() -> [WeeklyReportEntry] {
+        let matches = MockDataService.shared.fetchFeed(limit: 3)
+        let days = ["Monday", "Wednesday", "Friday"]
+        let insights = [
+            "Venus trines their natal Moon this week — emotional depth is available.",
+            "Mercury aligns with their rising — conversations will flow effortlessly.",
+            "Mars sextiles their Venus — shared momentum and creative spark."
+        ]
+        let transits = [
+            "Jupiter entering your 7th house amplifies this connection.",
+            "Full Moon in your 5th house — ideal for playful exchanges.",
+            "Venus retrograde ends — unresolved feelings may surface positively."
+        ]
+        return matches.enumerated().map { i, item in
+            WeeklyReportEntry(
+                matchName: item.user.displayName,
+                cosmicScore: item.cosmicScore,
+                weeklyInsight: insights[i % insights.count],
+                bestDay: days[i % days.count],
+                transitNote: transits[i % transits.count]
+            )
+        }
     }
 }

@@ -243,6 +243,7 @@ struct SynastryDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     scoreHeader
+                    radarSection
                     layersSection
                     aspectsSection
                     icebreakerSection
@@ -285,6 +286,21 @@ struct SynastryDetailSheet: View {
             }
             Spacer()
             MatchScoreBadge(score: item.cosmicScore, size: .large)
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+    }
+
+    private var radarSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("COMPATIBILITY_RADAR")
+                .systemLabel()
+            HStack {
+                Spacer()
+                RadarChartView.fromSynastry(score: item.cosmicScore)
+                Spacer()
+            }
+            .padding(.vertical, Spacing.sm)
         }
         .padding(Spacing.lg)
         .cosmicCard()

@@ -7,7 +7,14 @@ final class ChatViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var activeConversation: Conversation? = nil
     @Published var messageText: String = ""
-    @Published var isTyping: Bool = false  // Other user is typing
+    @Published var isTyping: Bool = false
+
+    // Icebreaker suggestions
+    @Published var icebreakerSuggestions: [String] = []
+    @Published var showIcebreakerSuggestions = false
+
+    // Block/Report
+    @Published var blockedUserIds: Set<UUID> = []
 
     var totalUnread: Int {
         conversations.reduce(0) { $0 + $1.unreadCount }
@@ -26,54 +33,123 @@ final class ChatViewModel: ObservableObject {
     func openConversation(_ conv: Conversation) {
         activeConversation = conv
         markRead(conv)
+        loadIcebreakerSuggestions(for: conv)
     }
 
     func markRead(_ conv: Conversation) {
         guard let idx = conversations.firstIndex(where: { $0.id == conv.id }) else { return }
         conversations[idx] = Conversation(
-            id: conv.id,
-            match: conv.match,
-            messages: conv.messages,
-            lastMessage: conv.lastMessage,
-            unreadCount: 0,
-            updatedAt: conv.updatedAt
+            id: conv.id, match: conv.match, messages: conv.messages,
+            lastMessage: conv.lastMessage, unreadCount: 0, updatedAt: conv.updatedAt,
+            streakDays: conv.streakDays, expiresAt: conv.expiresAt
         )
     }
 
     func sendMessage() {
         guard !messageText.trimmingCharacters(in: .whitespaces).isEmpty,
-              var conv = activeConversation else { return }
+              let conv = activeConversation else { return }
 
         let msg = Message(
-            id: UUID(),
             conversationId: conv.id,
             senderId: MockData.currentUserId,
             content: messageText.trimmingCharacters(in: .whitespaces),
-            createdAt: Date(),
-            readAt: nil,
             isFromCurrentUser: true
         )
 
-        // Optimistic UI update
+        applyMessage(msg, to: conv)
+        messageText = ""
+        showIcebreakerSuggestions = false
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        simulateTypingReply(in: conv)
+    }
+
+    func sendVoiceNote(duration: Double) {
+        guard let conv = activeConversation else { return }
+        let msg = Message(
+            conversationId: conv.id,
+            senderId: MockData.currentUserId,
+            content: "",
+            isFromCurrentUser: true,
+            isVoiceNote: true,
+            voiceDuration: duration
+        )
+        applyMessage(msg, to: conv)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        simulateTypingReply(in: conv)
+    }
+
+    func addReaction(_ emoji: String, to message: Message) {
+        guard let convIdx = conversations.firstIndex(where: { $0.id == message.conversationId }),
+              let msgIdx = conversations[convIdx].messages.firstIndex(where: { $0.id == message.id })
+        else { return }
+
+        var msg = conversations[convIdx].messages[msgIdx]
+        let current = msg.reactions[emoji] ?? 0
+        if current > 0 {
+            msg.reactions.removeValue(forKey: emoji)
+        } else {
+            msg.reactions[emoji] = current + 1
+        }
+        conversations[convIdx].messages[msgIdx] = msg
+
+        // Sync to activeConversation
+        if var active = activeConversation, active.id == conversations[convIdx].id {
+            active.messages[msgIdx] = msg
+            activeConversation = active
+        }
+
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    func unmatch(_ conv: Conversation, reason: UnmatchReason?) {
+        conversations.removeAll { $0.id == conv.id }
+        if activeConversation?.id == conv.id { activeConversation = nil }
+    }
+
+    func blockUser(_ userId: UUID, in conv: Conversation) {
+        blockedUserIds.insert(userId)
+        unmatch(conv, reason: nil)
+    }
+
+    // MARK: - Icebreaker suggestions
+
+    private func loadIcebreakerSuggestions(for conv: Conversation) {
+        let user = conv.otherUser
+        icebreakerSuggestions = [
+            "What does your \(user.birthChart.moonSign.rawValue) moon say about your ideal Sunday?",
+            "Your \(user.birthChart.risingSign.rawValue) rising is giving me serious intrigue.",
+            "Venus in \(user.birthChart.venusSign.rawValue) — do you fall fast or slow?",
+        ]
+    }
+
+    func focusedWithEmptyText() {
+        guard messageText.isEmpty else { showIcebreakerSuggestions = false; return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self, self.messageText.isEmpty else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                self.showIcebreakerSuggestions = true
+            }
+        }
+    }
+
+    func dismissIcebreakers() {
+        withAnimation { showIcebreakerSuggestions = false }
+    }
+
+    // MARK: - Private helpers
+
+    private func applyMessage(_ msg: Message, to conv: Conversation) {
         let updated = Conversation(
-            id: conv.id,
-            match: conv.match,
+            id: conv.id, match: conv.match,
             messages: conv.messages + [msg],
-            lastMessage: msg,
-            unreadCount: 0,
-            updatedAt: Date()
+            lastMessage: msg, unreadCount: 0,
+            updatedAt: Date(), streakDays: conv.streakDays + 1,
+            expiresAt: conv.expiresAt
         )
         activeConversation = updated
-
         if let idx = conversations.firstIndex(where: { $0.id == conv.id }) {
             conversations[idx] = updated
         }
-
-        messageText = ""
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-
-        // Simulate reply (typing indicator → response)
-        simulateTypingReply(in: conv)
     }
 
     private func simulateTypingReply(in conv: Conversation) {
@@ -90,23 +166,19 @@ final class ChatViewModel: ObservableObject {
                 "My Venus is literally doing a trine right now."
             ]
             let reply = Message(
-                id: UUID(),
                 conversationId: conv.id,
                 senderId: conv.otherUser.id,
                 content: replies.randomElement()!,
-                createdAt: Date(),
-                readAt: nil,
                 isFromCurrentUser: false
             )
             if var active = self.activeConversation, active.id == conv.id {
-                self.activeConversation = Conversation(
-                    id: active.id,
-                    match: active.match,
-                    messages: active.messages + [reply],
-                    lastMessage: reply,
-                    unreadCount: 0,
-                    updatedAt: Date()
+                active.messages.append(reply)
+                active = Conversation(
+                    id: active.id, match: active.match, messages: active.messages,
+                    lastMessage: reply, unreadCount: 0, updatedAt: Date(),
+                    streakDays: active.streakDays, expiresAt: active.expiresAt
                 )
+                self.activeConversation = active
             }
         }
     }
