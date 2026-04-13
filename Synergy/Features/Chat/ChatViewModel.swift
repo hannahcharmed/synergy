@@ -125,7 +125,7 @@ final class ChatViewModel: ObservableObject {
     func focusedWithEmptyText() {
         guard messageText.isEmpty else { showIcebreakerSuggestions = false; return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            guard let self, self.messageText.isEmpty else { return }
+            guard let self = self, self.messageText.isEmpty else { return }
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 self.showIcebreakerSuggestions = true
             }
