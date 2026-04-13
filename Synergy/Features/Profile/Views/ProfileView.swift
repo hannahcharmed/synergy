@@ -28,6 +28,7 @@ struct ProfileView: View {
                             tierBadge(user: user)
                             chartSummaryCard(user: user)
                             bioCard(user: user)
+                            promptsCard(user: user)
                             settingsSection
                             Spacer(minLength: 100)
                         }
@@ -234,6 +235,50 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Prompts Card
+
+    private func promptsCard(user: User) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("PROFILE_PROMPTS").systemLabel()
+            promptsContent(user: user)
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+    }
+
+    @ViewBuilder
+    private func promptsContent(user: User) -> some View {
+        if user.profile.prompts.isEmpty {
+            Text("Add up to 3 prompts to let people see your personality")
+                .font(SynergyFont.body(13))
+                .foregroundColor(.cosmicMuted)
+                .lineSpacing(3)
+        } else {
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                ForEach(user.profile.prompts) { prompt in
+                    singlePrompt(prompt)
+                }
+            }
+        }
+    }
+
+    private func singlePrompt(_ prompt: ProfilePrompt) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(prompt.question.uppercased())
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.cosmicCyan)
+                .kerning(0.5)
+            Text(prompt.answer)
+                .font(SynergyFont.body(14))
+                .foregroundColor(.cosmicNeutral)
+                .lineSpacing(3)
+        }
+        .padding(Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.cosmicDarkAlt)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
     }
 
     // MARK: - Settings Section

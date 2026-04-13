@@ -17,11 +17,16 @@ final class ProfileViewModel: ObservableObject {
             city: "London, UK"
         )
         let profile = UserProfile(
-            photos: [],
+            photos: ["you_1", "you_2"],
             bio: "Scorpio sun, Pisces rising. Depth over breadth.",
             intentionTags: [.aSoulmate, .growth],
             vibeWords: ["Intense", "Loyal", "Witchy"],
-            promptAnswer: "We're not as scary as we seem, just selective."
+            prompts: [
+                ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,
+                              answer: "We're not as scary as we seem, just selective."),
+                ProfilePrompt(question: PromptQuestion.perfectDay.rawValue,
+                              answer: "Full moon, candles, a book, and zero plans."),
+            ]
         )
         user = User(
             id: MockData.currentUserId,

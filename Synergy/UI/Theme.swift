@@ -13,17 +13,18 @@ extension Color {
 
     // Core palette
     static let cosmicDark    = adaptive(dark: "#202124", light: "#F5F0FF")
-    static let cosmicCyan    = Color(hex: "#00F0FF")   // works on both modes
-    static let cosmicPurple  = Color(hex: "#7D5FFF")   // works on both modes
+    // Adaptive accents: neon on dark, deeper/accessible on light
+    static let cosmicCyan    = adaptive(dark: "#00F0FF", light: "#0077A8")
+    static let cosmicPurple  = adaptive(dark: "#7D5FFF", light: "#5433C8")
     static let cosmicNeutral = adaptive(dark: "#F8F9FA", light: "#1A1525")
 
     // Extended
     static let cosmicDarkAlt = adaptive(dark: "#16181A", light: "#EDE5FA")
     static let cosmicCard    = adaptive(dark: "#1E2023", light: "#FFFFFF")
-    static let cosmicBorder  = adaptive(dark: "#2C2F33", light: "#D9CEF0")
-    static let cosmicMuted   = adaptive(dark: "#6B7280", light: "#6B5E8A")
+    static let cosmicBorder  = adaptive(dark: "#2C2F33", light: "#C9BEE8")
+    static let cosmicMuted   = adaptive(dark: "#6B7280", light: "#4E3F70")
     static let cosmicError   = Color(hex: "#FF4D6A")
-    static let cosmicSuccess = Color(hex: "#00D68F")
+    static let cosmicSuccess = adaptive(dark: "#00D68F", light: "#007A52")
 
     // Semantic element colours
     static let cosmicFire  = Color(hex: "#FF6B35")

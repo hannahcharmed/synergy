@@ -15,20 +15,23 @@ struct MatchCardView: View {
     @State private var likeOpacity: Double = 0
     @State private var passOpacity: Double = 0
     @State private var synastryHintOpacity: Double = 0
+    @State private var photoIndex: Int = 0
 
     private let swipeThreshold: CGFloat = 100
     private let swipeUpThreshold: CGFloat = -80
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Photo / gradient background
+            // Photo / gradient background (with cycling taps + dots)
             photoLayer
 
             // Like / Pass overlays
             swipeOverlays
 
-            // Bottom info panel
+            // Bottom info panel — tap here to open synastry
             infoPanel
+                .contentShape(Rectangle())
+                .onTapGesture { onTap?() }
         }
         .clipShape(RoundedRectangle(cornerRadius: Radius.card))
         .cardShadow()
@@ -36,7 +39,6 @@ struct MatchCardView: View {
         .offset(dragOffset)
         .rotationEffect(.degrees(dragAngle))
         .gesture(isTop ? dragGesture : nil)
-        .onTapGesture { onTap?() }
         .animation(.interactiveSpring(), value: dragOffset)
         .accessibilityLabel("\(item.user.displayName), \(item.user.age), \(item.cosmicScore)% cosmic match")
     }
@@ -45,22 +47,33 @@ struct MatchCardView: View {
 
     private var photoLayer: some View {
         ZStack {
-            // Placeholder gradient (replace with SDWebImageSwiftUI in production)
+            // Placeholder gradient — shifts slightly per photo index
             LinearGradient(
-                colors: photoGradient,
+                colors: currentPhotoGradient,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.easeInOut(duration: 0.18), value: photoIndex)
 
             // Initials placeholder
             Text(item.user.displayName.prefix(1))
                 .font(SynergyFont.headline(96))
                 .foregroundColor(.white.opacity(0.12))
 
-            // Bottom fade
+            // Left/right tap zones for photo cycling
+            if item.user.profile.photos.count > 1 {
+                photoNavZones
+            }
+
             VStack {
+                // Photo dots indicator
+                if item.user.profile.photos.count > 1 {
+                    photoDots
+                        .padding(.top, Spacing.sm)
+                }
                 Spacer()
+                // Bottom fade
                 LinearGradient(
                     colors: [.clear, Color.cosmicDark.opacity(0.95)],
                     startPoint: .top,
@@ -71,7 +84,42 @@ struct MatchCardView: View {
         }
     }
 
-    private var photoGradient: [Color] {
+    private var photoNavZones: some View {
+        let count = item.user.profile.photos.count
+        return HStack(spacing: 0) {
+            Rectangle().fill(Color.clear)
+                .onTapGesture {
+                    withAnimation { photoIndex = max(0, photoIndex - 1) }
+                }
+            Rectangle().fill(Color.clear)
+                .onTapGesture {
+                    withAnimation { photoIndex = min(count - 1, photoIndex + 1) }
+                }
+        }
+    }
+
+    private var photoDots: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<item.user.profile.photos.count, id: \.self) { i in
+                Capsule()
+                    .fill(i == photoIndex ? Color.white : Color.white.opacity(0.4))
+                    .frame(width: i == photoIndex ? 18 : 6, height: 4)
+                    .animation(.easeInOut(duration: 0.18), value: photoIndex)
+            }
+        }
+    }
+
+    private var currentPhotoGradient: [Color] {
+        let base = basePhotoGradient
+        // Slightly different tint per photo so cycling feels like changing photos
+        let shift = Double(photoIndex) * 0.06
+        return [
+            base[0].opacity(1.0 - shift),
+            base[1]
+        ]
+    }
+
+    private var basePhotoGradient: [Color] {
         switch item.user.birthChart.sunSign.element {
         case .fire:  return [Color(hex: "#2D1B1B"), Color(hex: "#3D2612")]
         case .earth: return [Color(hex: "#1A2D1A"), Color(hex: "#1E2D1A")]
@@ -257,6 +305,11 @@ struct MatchCardView: View {
                 }
             }
 
+            // First prompt (Hinge-style)
+            if let prompt = item.user.profile.prompts.first {
+                promptRow(prompt)
+            }
+
             // Swipe-up hint (only on top card)
             if isTop {
                 HStack {
@@ -274,6 +327,26 @@ struct MatchCardView: View {
         }
         .padding(Spacing.lg)
         .padding(.bottom, Spacing.sm)
+    }
+
+    private func promptRow(_ prompt: ProfilePrompt) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(prompt.question.uppercased())
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.cosmicMuted)
+                .kerning(0.5)
+                .lineLimit(1)
+            Text("\u{201C}\(prompt.answer)\u{201D}")
+                .font(SynergyFont.body(13))
+                .foregroundColor(.cosmicNeutral)
+                .lineLimit(2)
+                .lineSpacing(2)
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.black.opacity(0.3))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
     }
 
     // MARK: - Drag Gesture
