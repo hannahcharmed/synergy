@@ -683,16 +683,21 @@ private struct ShareableProfileCardView: View {
     private var starField: some View {
         GeometryReader { geo in
             ForEach(0..<40, id: \.self) { i in
-                let x = CGFloat((i * 137 + 23) % Int(geo.size.width))
-                let y = CGFloat((i * 97 + 41) % Int(geo.size.height))
-                let size = CGFloat((i % 3) + 1)
-                Circle()
-                    .fill(Color.white)
-                    .opacity(Double((i % 5) + 1) * 0.07)
-                    .frame(width: size, height: size)
-                    .position(x: x, y: y)
+                starDot(i: i, canvasSize: geo.size)
             }
         }
+    }
+
+    private func starDot(i: Int, canvasSize: CGSize) -> some View {
+        let x = CGFloat((i * 137 + 23) % Int(canvasSize.width))
+        let y = CGFloat((i * 97 + 41) % Int(canvasSize.height))
+        let dotSize = CGFloat((i % 3) + 1)
+        let alpha = Double((i % 5) + 1) * 0.07
+        return Circle()
+            .fill(Color.white)
+            .opacity(alpha)
+            .frame(width: dotSize, height: dotSize)
+            .position(x: x, y: y)
     }
 }
 
