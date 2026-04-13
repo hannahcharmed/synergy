@@ -603,7 +603,8 @@ private struct ShareableProfileCardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.lg)
-                        .strokeBorder(Color.cosmicPurple.opacity(0.4), lineWidth: 1)
+                        .strokeBorder(Color.cosmicPurple, lineWidth: 1)
+                        .opacity(0.4)
                 )
 
                 if !user.profile.vibeWords.isEmpty {
@@ -616,7 +617,7 @@ private struct ShareableProfileCardView: View {
                                 .padding(.vertical, 6)
                                 .background(Color.white.opacity(0.08))
                                 .clipShape(Capsule())
-                                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                                .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1).opacity(0.15))
                         }
                     }
                 }
@@ -660,7 +661,8 @@ private struct ShareableProfileCardView: View {
                 let y = CGFloat((i * 97 + 41) % Int(geo.size.height))
                 let size = CGFloat((i % 3) + 1)
                 Circle()
-                    .fill(Color.white.opacity(Double((i % 5) + 1) * 0.07))
+                    .fill(Color.white)
+                    .opacity(Double((i % 5) + 1) * 0.07)
                     .frame(width: size, height: size)
                     .position(x: x, y: y)
             }
