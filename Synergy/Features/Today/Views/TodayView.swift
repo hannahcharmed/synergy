@@ -147,7 +147,8 @@ struct TodayView: View {
                 .fill(Color.cosmicCard)
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.md)
-                        .strokeBorder(Color.cosmicCyan.opacity(0.4), lineWidth: 1.5)
+                        .strokeBorder(Color.cosmicCyan, lineWidth: 1.5)
+                        .opacity(0.4)
                 )
         )
     }
@@ -174,7 +175,8 @@ struct TodayView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.md))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md)
-                .strokeBorder(Color.cosmicError.opacity(0.3), lineWidth: 1)
+                .strokeBorder(Color.cosmicError, lineWidth: 1)
+                .opacity(0.3)
         )
     }
 
@@ -201,10 +203,10 @@ struct TodayView: View {
 
             HStack(spacing: 3) {
                 ForEach(1...5, id: \.self) { i in
+                    let barColor: Color = i <= h.cosmicWeather.intensityLevel
+                        ? Color(hex: h.cosmicWeather.mood.color) : Color.cosmicBorder
                     Capsule()
-                        .fill(i <= h.cosmicWeather.intensityLevel
-                              ? Color(hex: h.cosmicWeather.mood.color)
-                              : Color.cosmicBorder)
+                        .fill(barColor)
                         .frame(width: 6, height: 14 + CGFloat(i) * 3)
                 }
             }
@@ -297,7 +299,8 @@ struct TodayView: View {
         .cosmicCard()
         .overlay(
             RoundedRectangle(cornerRadius: Radius.card)
-                .strokeBorder(Color.cosmicPurple.opacity(0.4), lineWidth: 1)
+                .strokeBorder(Color.cosmicPurple, lineWidth: 1)
+                .opacity(0.4)
         )
     }
 
@@ -439,9 +442,10 @@ struct RitualCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: Radius.card)
                 .strokeBorder(
-                    ritual.isActive ? accentColor.opacity(0.3) : Color.cosmicBorder,
+                    ritual.isActive ? accentColor : Color.cosmicBorder,
                     lineWidth: ritual.isActive ? 1.5 : 1
                 )
+                .opacity(ritual.isActive ? 0.3 : 1.0)
         )
     }
 }
@@ -520,7 +524,8 @@ struct RitualDetailSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: Radius.md))
                     .overlay(
                         RoundedRectangle(cornerRadius: Radius.md)
-                            .strokeBorder(accentColor.opacity(0.3), lineWidth: 1)
+                            .strokeBorder(accentColor, lineWidth: 1)
+                            .opacity(0.3)
                     )
 
                     CosmicButton("Set my intention", variant: .gradient) {

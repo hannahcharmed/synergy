@@ -77,7 +77,7 @@ struct ChatView: View {
                     .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(Color.cosmicCyan.opacity(0.1))
                     .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.3), lineWidth: 1))
+                    .overlay(Capsule().strokeBorder(Color.cosmicCyan, lineWidth: 1).opacity(0.3))
             }
         }
         .padding(.horizontal, Spacing.xl)
@@ -214,7 +214,7 @@ struct ChatView: View {
                                     .padding(.vertical, 8)
                                     .background(Color.cosmicCyan.opacity(0.08))
                                     .clipShape(Capsule())
-                                    .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.25), lineWidth: 1))
+                                    .overlay(Capsule().strokeBorder(Color.cosmicCyan, lineWidth: 1).opacity(0.25))
                             }
                         }
                         Button { vm.dismissIcebreakers() } label: {
@@ -685,7 +685,8 @@ struct VoiceNotePlayerView: View {
                     ForEach(0..<barHeights.count, id: \.self) { i in
                         let played = Double(i) / Double(barHeights.count) <= playProgress
                         Capsule()
-                            .fill(played ? accentColor : accentColor.opacity(0.3))
+                            .fill(accentColor)
+                            .opacity(played ? 1.0 : 0.3)
                             .frame(width: 3, height: geo.size.height * barHeights[i])
                     }
                 }

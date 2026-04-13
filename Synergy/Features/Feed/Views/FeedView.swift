@@ -419,7 +419,8 @@ private struct RadarChartView: View {
             // Grid rings
             ForEach(1...gridLevels, id: \.self) { level in
                 RadarPolygonShape(sides: sides, scale: Double(level) / Double(gridLevels))
-                    .stroke(Color.cosmicBorder.opacity(0.4), lineWidth: 1)
+                    .stroke(Color.cosmicBorder, lineWidth: 1)
+                    .opacity(0.4)
             }
 
             // Axis lines
@@ -428,7 +429,8 @@ private struct RadarChartView: View {
                     p.move(to: radarCenter)
                     p.addLine(to: radarPoint(index: i, scale: 1.0))
                 }
-                .stroke(Color.cosmicBorder.opacity(0.3), lineWidth: 1)
+                .stroke(Color.cosmicBorder, lineWidth: 1)
+                .opacity(0.3)
             }
 
             // Filled area
