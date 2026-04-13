@@ -553,90 +553,107 @@ private struct ShareableProfileCardView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color(hex: "#0D0A1A"), Color(hex: "#1A1328"), Color(hex: "#0A0D1A")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
+            cardBackground
             starField
-
-            VStack(spacing: Spacing.xl) {
-                Text("SYNERGY")
-                    .font(.system(size: 13, weight: .black, design: .monospaced))
-                    .kerning(6)
-                    .foregroundStyle(LinearGradient.cosmicGradient)
-
-                Spacer()
-
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient.cosmicGradient)
-                        .frame(width: 100, height: 100)
-                        .blur(radius: 1)
-                        .cosmicPurpleGlow(radius: 24)
-                    Text(user.displayName.prefix(1))
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
-
-                VStack(spacing: 6) {
-                    Text(user.displayName)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                    Text("\(user.age) · \(user.locationDisplay)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-
-                HStack(spacing: Spacing.lg) {
-                    bigThreeItem(symbol: "☉", label: "Sun",
-                                 value: user.birthChart.sunSign.rawValue)
-                    bigThreeItem(symbol: "☽", label: "Moon",
-                                 value: user.birthChart.moonSign.rawValue)
-                    bigThreeItem(symbol: "AC", label: "Rising",
-                                 value: user.birthChart.risingSign.rawValue)
-                }
-                .padding(.horizontal, Spacing.xl)
-                .padding(.vertical, Spacing.lg)
-                .background(Color.white.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.lg)
-                        .strokeBorder(Color.cosmicPurple, lineWidth: 1)
-                        .opacity(0.4)
-                )
-
-                if !user.profile.vibeWords.isEmpty {
-                    HStack(spacing: Spacing.sm) {
-                        ForEach(user.profile.vibeWords.prefix(3), id: \.self) { word in
-                            Text(word)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.white.opacity(0.08))
-                                .clipShape(Capsule())
-                                .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1).opacity(0.15))
-                        }
-                    }
-                }
-
-                Spacer()
-
-                VStack(spacing: 6) {
-                    Text("Find your cosmic match")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                    Text("synergy.app")
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
-                        .foregroundStyle(LinearGradient.cosmicGradient)
-                }
-            }
-            .padding(Spacing.xl)
+            cardContent
         }
         .frame(width: 320, height: 568)
         .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+    }
+
+    private var cardBackground: some View {
+        LinearGradient(
+            colors: [Color(hex: "#0D0A1A"), Color(hex: "#1A1328"), Color(hex: "#0A0D1A")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var cardContent: some View {
+        VStack(spacing: Spacing.xl) {
+            Text("SYNERGY")
+                .font(.system(size: 13, weight: .black, design: .monospaced))
+                .kerning(6)
+                .foregroundStyle(LinearGradient.cosmicGradient)
+            Spacer()
+            avatarView
+            nameView
+            bigThreeBar
+            vibeWordsRow
+            Spacer()
+            footerView
+        }
+        .padding(Spacing.xl)
+    }
+
+    private var avatarView: some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient.cosmicGradient)
+                .frame(width: 100, height: 100)
+                .blur(radius: 1)
+                .cosmicPurpleGlow(radius: 24)
+            Text(user.displayName.prefix(1))
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+        }
+    }
+
+    private var nameView: some View {
+        VStack(spacing: 6) {
+            Text(user.displayName)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Text("\(user.age) · \(user.locationDisplay)")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
+        }
+    }
+
+    private var bigThreeBar: some View {
+        HStack(spacing: Spacing.lg) {
+            bigThreeItem(symbol: "☉", label: "Sun",   value: user.birthChart.sunSign.rawValue)
+            bigThreeItem(symbol: "☽", label: "Moon",  value: user.birthChart.moonSign.rawValue)
+            bigThreeItem(symbol: "AC", label: "Rising", value: user.birthChart.risingSign.rawValue)
+        }
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.lg)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .strokeBorder(Color.cosmicPurple, lineWidth: 1)
+                .opacity(0.4)
+        )
+    }
+
+    @ViewBuilder
+    private var vibeWordsRow: some View {
+        if !user.profile.vibeWords.isEmpty {
+            HStack(spacing: Spacing.sm) {
+                ForEach(user.profile.vibeWords.prefix(3), id: \.self) { word in
+                    Text(word)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(Color.white, lineWidth: 1).opacity(0.15))
+                }
+            }
+        }
+    }
+
+    private var footerView: some View {
+        VStack(spacing: 6) {
+            Text("Find your cosmic match")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+            Text("synergy.app")
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundStyle(LinearGradient.cosmicGradient)
+        }
     }
 
     private func bigThreeItem(symbol: String, label: String, value: String) -> some View {
