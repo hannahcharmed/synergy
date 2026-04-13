@@ -192,36 +192,48 @@ struct ProfileView: View {
     private func bioCard(user: User) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("PROFILE_DATA").systemLabel()
-
-            if let bio = user.profile.bio {
-                Text(bio)
-                    .font(SynergyFont.body(14))
-                    .foregroundColor(.cosmicNeutral.opacity(0.8))
-                    .lineSpacing(4)
-            }
-
-            if !user.profile.vibeWords.isEmpty {
-                HStack(spacing: Spacing.sm) {
-                    ForEach(user.profile.vibeWords, id: \.self) { word in
-                        PlanetAspectTag(text: word, highlighted: true)
-                    }
-                }
-            }
-
-            if !user.profile.intentionTags.isEmpty {
-                HStack(spacing: Spacing.sm) {
-                    ForEach(user.profile.intentionTags) { tag in
-                        HStack(spacing: 4) {
-                            Image(systemName: tag.icon).font(.system(size: 11))
-                            Text(tag.rawValue).font(SynergyFont.body(12))
-                        }
-                        .foregroundColor(.cosmicMuted)
-                    }
-                }
-            }
+            bioText(user: user)
+            vibeTagsRow(user: user)
+            intentionTagsRow(user: user)
         }
         .padding(Spacing.lg)
         .cosmicCard()
+    }
+
+    @ViewBuilder
+    private func bioText(user: User) -> some View {
+        if let bio = user.profile.bio {
+            Text(bio)
+                .font(SynergyFont.body(14))
+                .foregroundColor(.cosmicNeutral.opacity(0.8))
+                .lineSpacing(4)
+        }
+    }
+
+    @ViewBuilder
+    private func vibeTagsRow(user: User) -> some View {
+        if !user.profile.vibeWords.isEmpty {
+            HStack(spacing: Spacing.sm) {
+                ForEach(user.profile.vibeWords, id: \.self) { word in
+                    PlanetAspectTag(text: word, highlighted: true)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func intentionTagsRow(user: User) -> some View {
+        if !user.profile.intentionTags.isEmpty {
+            HStack(spacing: Spacing.sm) {
+                ForEach(user.profile.intentionTags) { tag in
+                    HStack(spacing: 4) {
+                        Image(systemName: tag.icon).font(.system(size: 11))
+                        Text(tag.rawValue).font(SynergyFont.body(12))
+                    }
+                    .foregroundColor(.cosmicMuted)
+                }
+            }
+        }
     }
 
     // MARK: - Settings Section
@@ -229,33 +241,32 @@ struct ProfileView: View {
     private var settingsSection: some View {
         VStack(spacing: Spacing.sm) {
             if vm.user?.subscriptionTier == .stardust {
-                Button { vm.showPaywall = true } label: {
-                    HStack {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(LinearGradient.cosmicGradient)
-                        Text("Upgrade to Cosmic")
-                            .font(SynergyFont.body(15, weight: .semibold))
-                            .foregroundStyle(LinearGradient.cosmicGradient)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12))
-                            .foregroundColor(.cosmicMuted)
-                    }
-                    .padding(Spacing.lg)
-                    .background(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .fill(Color.cosmicCard)
-                            .overlay(RoundedRectangle(cornerRadius: Radius.md)
-                                .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 1.5))
-                    )
-                }
-                .buttonStyle(.plain)
+                upgradeButton
             }
-
             ForEach(settingsRows, id: \.title) { row in
                 settingsRow(row)
             }
         }
+    }
+
+    private var upgradeButton: some View {
+        Button { vm.showPaywall = true } label: {
+            HStack {
+                Image(systemName: "sparkles").foregroundStyle(LinearGradient.cosmicGradient)
+                Text("Upgrade to Cosmic")
+                    .font(SynergyFont.body(15, weight: .semibold))
+                    .foregroundStyle(LinearGradient.cosmicGradient)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(.cosmicMuted)
+            }
+            .padding(Spacing.lg)
+            .cosmicCard()
+            .overlay(RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(LinearGradient.cosmicGradient, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
     }
 
     private struct SettingsRow {
@@ -345,7 +356,7 @@ struct SettingsMenuSheet: View {
 
     private var settingsContent: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            if let user = vm.user { accountHeader(user: user) }
+            if let user = vm.user { accountHeader(user) }
             Divider().overlay(Color.cosmicBorder)
             appearancePicker
             Divider().overlay(Color.cosmicBorder)
