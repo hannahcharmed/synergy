@@ -141,24 +141,7 @@ struct ProfileView: View {
                 Text("PLACIDUS").systemLabel().foregroundColor(.cosmicMuted.opacity(0.5))
             }
 
-            HStack(spacing: 0) {
-                ForEach([
-                    ("☉", "Sun",    user.birthChart.sunSign.rawValue),
-                    ("☽", "Moon",   user.birthChart.moonSign.rawValue),
-                    ("AC", "Rising", user.birthChart.risingSign.rawValue),
-                ], id: \.1) { symbol, label, value in
-                    VStack(spacing: 4) {
-                        Text(symbol).font(.system(size: 20)).foregroundColor(.cosmicCyan)
-                        Text(value).font(SynergyFont.headlineMedium(14)).foregroundColor(.cosmicNeutral)
-                        Text(label.uppercased()).systemLabel()
-                    }
-                    .frame(maxWidth: .infinity)
-                    if label != "Rising" {
-                        Divider().overlay(Color.cosmicBorder).frame(height: 40)
-                    }
-                }
-            }
-            .padding(.vertical, Spacing.sm)
+            bigThreeRow(user: user)
 
             Divider().overlay(Color.cosmicBorder)
 
@@ -182,6 +165,26 @@ struct ProfileView: View {
         }
         .padding(Spacing.lg)
         .cosmicCard()
+    }
+
+    private func bigThreeRow(user: User) -> some View {
+        HStack(spacing: 0) {
+            signItem(symbol: "☉",  label: "Sun",    value: user.birthChart.sunSign.rawValue)
+            Divider().overlay(Color.cosmicBorder).frame(height: 40)
+            signItem(symbol: "☽",  label: "Moon",   value: user.birthChart.moonSign.rawValue)
+            Divider().overlay(Color.cosmicBorder).frame(height: 40)
+            signItem(symbol: "AC", label: "Rising",  value: user.birthChart.risingSign.rawValue)
+        }
+        .padding(.vertical, Spacing.sm)
+    }
+
+    private func signItem(symbol: String, label: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(symbol).font(.system(size: 20)).foregroundColor(.cosmicCyan)
+            Text(value).font(SynergyFont.headlineMedium(14)).foregroundColor(.cosmicNeutral)
+            Text(label.uppercased()).systemLabel()
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Bio Card
@@ -327,69 +330,7 @@ struct SettingsMenuSheet: View {
         NavigationView {
             ZStack {
                 Color.cosmicDark.ignoresSafeArea()
-                VStack(alignment: .leading, spacing: Spacing.lg) {
-                    if let user = vm.user {
-                        // Account info
-                        HStack(spacing: Spacing.md) {
-                            ZStack {
-                                Circle()
-                                    .fill(LinearGradient.cosmicGradient)
-                                    .frame(width: 56, height: 56)
-                                Text(user.displayName.prefix(1))
-                                    .font(SynergyFont.headline(24))
-                                    .foregroundColor(.cosmicDark)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(user.displayName)
-                                    .font(SynergyFont.headline(18))
-                                    .foregroundColor(.cosmicNeutral)
-                                Text(user.subscriptionTier.displayName + " member")
-                                    .font(SynergyFont.body(13))
-                                    .foregroundColor(.cosmicMuted)
-                            }
-                        }
-                        .padding(.bottom, Spacing.sm)
-                    }
-
-                    Divider().overlay(Color.cosmicBorder)
-
-                    // Appearance
-                    VStack(alignment: .leading, spacing: Spacing.sm) {
-                        Text("APPEARANCE")
-                            .systemLabel()
-                            .padding(.horizontal, Spacing.lg)
-
-                        Picker("", selection: $colorSchemePreference) {
-                            Text("Dark").tag("dark")
-                            Text("Light").tag("light")
-                            Text("System").tag("system")
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, Spacing.lg)
-                    }
-
-                    Divider().overlay(Color.cosmicBorder)
-
-                    // App version
-                    HStack {
-                        Text("VERSION")
-                            .systemLabel()
-                        Spacer()
-                        Text("1.0.0 (mock)")
-                            .font(SynergyFont.body(13))
-                            .foregroundColor(.cosmicMuted)
-                    }
-                    .padding(.horizontal, Spacing.lg)
-
-                    Spacer()
-
-                    // Sign out
-                    CosmicButton("Sign out", variant: .outlined) {
-                        dismiss()
-                        coordinator.signOut()
-                    }
-                }
-                .padding(Spacing.xl)
+                settingsContent
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -400,6 +341,63 @@ struct SettingsMenuSheet: View {
             }
         }
         .navigationViewStyle(.stack)
+    }
+
+    private var settingsContent: some View {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
+            if let user = vm.user { accountHeader(user: user) }
+            Divider().overlay(Color.cosmicBorder)
+            appearancePicker
+            Divider().overlay(Color.cosmicBorder)
+            versionRow
+            Spacer()
+            CosmicButton("Sign out", variant: .outlined) { dismiss(); coordinator.signOut() }
+        }
+        .padding(Spacing.xl)
+    }
+
+    private func accountHeader(_ user: User) -> some View {
+        HStack(spacing: Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.cosmicGradient)
+                    .frame(width: 56, height: 56)
+                Text(user.displayName.prefix(1))
+                    .font(SynergyFont.headline(24))
+                    .foregroundColor(.cosmicDark)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(user.displayName)
+                    .font(SynergyFont.headline(18))
+                    .foregroundColor(.cosmicNeutral)
+                Text(user.subscriptionTier.displayName + " member")
+                    .font(SynergyFont.body(13))
+                    .foregroundColor(.cosmicMuted)
+            }
+        }
+        .padding(.bottom, Spacing.sm)
+    }
+
+    private var appearancePicker: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("APPEARANCE").systemLabel().padding(.horizontal, Spacing.lg)
+            Picker("", selection: $colorSchemePreference) {
+                Text("Dark").tag("dark")
+                Text("Light").tag("light")
+                Text("System").tag("system")
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, Spacing.lg)
+        }
+    }
+
+    private var versionRow: some View {
+        HStack {
+            Text("VERSION").systemLabel()
+            Spacer()
+            Text("1.0.0 (mock)").font(SynergyFont.body(13)).foregroundColor(.cosmicMuted)
+        }
+        .padding(.horizontal, Spacing.lg)
     }
 }
 
