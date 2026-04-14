@@ -69,6 +69,18 @@ struct MainTabView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(Color.cosmicDark)
+        // Icebreaker handoff: switch to chat tab and pre-fill message
+        .onChange(of: feedVM.pendingIcebreakerText) { text in
+            guard let text = text else { return }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                selectedTab = .chat
+            }
+            // Brief delay so the tab animation completes first
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                chatVM.messageText = text
+                feedVM.pendingIcebreakerText = nil
+            }
+        }
     }
 }
 

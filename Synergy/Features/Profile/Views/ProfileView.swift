@@ -27,6 +27,7 @@ struct ProfileView: View {
                         VStack(spacing: Spacing.xl) {
                             profileNavBar(user: user)
                             tierBadge(user: user)
+                            completionCard(user: user)
                             chartSummaryCard(user: user)
                             bioCard(user: user)
                             promptsCard(user: user)
@@ -140,6 +141,101 @@ struct ProfileView: View {
         case .cosmic:   return .cosmicCyan
         case .oracle:   return .cosmicPurple
         }
+    }
+
+    // MARK: - Profile Completion Meter
+
+    private func completionScore(for user: User) -> Int {
+        var score = 0
+        if user.profile.bio != nil && !(user.profile.bio?.isEmpty ?? true) { score += 20 }
+        score += min(20, user.profile.photos.count * 10)   // 10 pts per photo, max 20
+        score += min(15, user.profile.vibeWords.count * 5) // 5 pts per vibe word, max 15
+        score += min(30, user.profile.prompts.count * 10)  // 10 pts per prompt, max 30
+        if user.profile.height != nil       { score += 8 }
+        if user.profile.occupation != nil   { score += 7 }
+        return min(100, score)
+    }
+
+    private func completionCard(user: User) -> some View {
+        let pct = completionScore(for: user)
+        return VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                Text("PROFILE_STRENGTH")
+                    .systemLabel()
+                Spacer()
+                Text("\(pct)%")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(pct >= 80 ? AnyShapeStyle(LinearGradient.cosmicGradient)
+                                               : AnyShapeStyle(Color.cosmicMuted))
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.cosmicBorder)
+                    Capsule()
+                        .fill(LinearGradient.cosmicGradient)
+                        .frame(width: geo.size.width * CGFloat(pct) / 100)
+                }
+                .frame(height: 6)
+            }
+            .frame(height: 6)
+
+            if pct < 100 {
+                completionTips(for: user)
+            } else {
+                Text("Your profile is fully optimised — more matches incoming.")
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicSuccess)
+                    .lineSpacing(2)
+            }
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+    }
+
+    @ViewBuilder
+    private func completionTips(for user: User) -> some View {
+        let tips = buildCompletionTips(for: user)
+        if !tips.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("TO_IMPROVE")
+                    .systemLabel()
+                    .foregroundColor(.cosmicMuted)
+                ForEach(tips.prefix(2), id: \.self) { tip in
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.cosmicPurple)
+                        Text(tip)
+                            .font(SynergyFont.body(12))
+                            .foregroundColor(.cosmicNeutral.opacity(0.7))
+                    }
+                }
+            }
+        }
+    }
+
+    private func buildCompletionTips(for user: User) -> [String] {
+        var tips: [String] = []
+        if user.profile.bio == nil || (user.profile.bio?.isEmpty ?? true) {
+            tips.append("Add a bio to show your personality (+20 pts)")
+        }
+        if user.profile.photos.count < 2 {
+            tips.append("Add \(2 - user.profile.photos.count) more photo(s) (+10 pts each)")
+        }
+        if user.profile.vibeWords.count < 3 {
+            tips.append("Add \(3 - user.profile.vibeWords.count) vibe word(s) (+5 pts each)")
+        }
+        if user.profile.prompts.count < 3 {
+            tips.append("Answer \(3 - user.profile.prompts.count) more prompt(s) (+10 pts each)")
+        }
+        if user.profile.height == nil {
+            tips.append("Add your height (+8 pts)")
+        }
+        if user.profile.occupation == nil {
+            tips.append("Add your occupation (+7 pts)")
+        }
+        return tips
     }
 
     // MARK: - Birth Chart Summary
@@ -447,7 +543,7 @@ struct SettingsMenuSheet: View {
     }
 
     private var appearancePicker: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text("APPEARANCE").systemLabel().padding(.horizontal, Spacing.lg)
             Picker("", selection: $colorSchemePreference) {
                 Text("Dark").tag("dark")
@@ -456,7 +552,96 @@ struct SettingsMenuSheet: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, Spacing.lg)
+
+            // Live preview card
+            appearancePreviewCard
+                .padding(.horizontal, Spacing.lg)
         }
+    }
+
+    private var appearancePreviewCard: some View {
+        let isDark = colorSchemePreference == "dark" ||
+            (colorSchemePreference == "system" &&
+             UITraitCollection.current.userInterfaceStyle == .dark)
+        let bgColor     = isDark ? Color(hex: "#13141A") : Color(hex: "#F4EDFF")
+        let cardBg      = isDark ? Color(hex: "#1A1C24") : Color.white
+        let textColor   = isDark ? Color.white           : Color(hex: "#1A1525")
+        let mutedColor  = isDark ? Color(hex: "#6B7280") : Color(hex: "#5B4D7A")
+        let borderColor = isDark ? Color(hex: "#2C2F33") : Color(hex: "#D4C8F0")
+        let cyanColor   = isDark ? Color(hex: "#00F0FF") : Color(hex: "#0088B3")
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("PREVIEW")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(cyanColor)
+                    .kerning(1.5)
+                Spacer()
+                // Mini mode indicator
+                Image(systemName: isDark ? "moon.fill" : "sun.max.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(cyanColor)
+            }
+
+            // Simulated match card row
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient.cosmicGradient)
+                        .frame(width: 40, height: 40)
+                    Text("L")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(isDark ? Color(hex: "#13141A") : Color.white)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Luna, 26")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(textColor)
+                    Text("♏ Scorpio · Pisces rising")
+                        .font(.system(size: 11))
+                        .foregroundColor(mutedColor)
+                }
+
+                Spacer()
+
+                Text("87%")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundColor(cyanColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(cyanColor.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+            .padding(10)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(borderColor, lineWidth: 1)
+            )
+
+            // Simulated message bubble row
+            HStack {
+                Spacer()
+                Text("Venus in Scorpio — I feel you. \u{1F31D}")
+                    .font(.system(size: 12))
+                    .foregroundColor(isDark ? Color.white : Color(hex: "#1A1525"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(isDark ? Color(hex: "#7D5FFF").opacity(0.55) : Color(hex: "#7D5FFF"))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(maxWidth: 200)
+            }
+        }
+        .padding(12)
+        .background(bgColor)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(borderColor, lineWidth: 1)
+        )
+        .animation(.easeInOut(duration: 0.25), value: colorSchemePreference)
     }
 
     private var versionRow: some View {
