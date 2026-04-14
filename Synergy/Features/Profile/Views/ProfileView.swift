@@ -920,11 +920,65 @@ struct EditProfileSheet: View {
         }
     }
 
+    private var vibeSuggestions: [String] {
+        switch user.birthChart.sunSign {
+        case .aries:       return ["Bold", "Passionate", "Direct", "Fearless", "Fiery"]
+        case .taurus:      return ["Grounded", "Sensual", "Steady", "Loyal", "Patient"]
+        case .gemini:      return ["Witty", "Curious", "Playful", "Electric", "Adaptable"]
+        case .cancer:      return ["Nurturing", "Intuitive", "Empathic", "Deep", "Homey"]
+        case .leo:         return ["Radiant", "Generous", "Dramatic", "Warm", "Creative"]
+        case .virgo:       return ["Analytical", "Precise", "Caring", "Grounded", "Thoughtful"]
+        case .libra:       return ["Charming", "Fair", "Aesthetic", "Witty", "Diplomatic"]
+        case .scorpio:     return ["Intense", "Mysterious", "Loyal", "Magnetic", "Deep"]
+        case .sagittarius: return ["Free", "Adventurous", "Philosophical", "Honest", "Optimistic"]
+        case .capricorn:   return ["Ambitious", "Steady", "Disciplined", "Dry", "Private"]
+        case .aquarius:    return ["Electric", "Visionary", "Quirky", "Detached", "Original"]
+        case .pisces:      return ["Dreamy", "Empathic", "Creative", "Fluid", "Romantic"]
+        }
+    }
+
+    private var currentVibeWords: [String] {
+        [vibeWord1, vibeWord2, vibeWord3].filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+    }
+
+    private func fillNextVibeSlot(_ word: String) {
+        if vibeWord1.trimmingCharacters(in: .whitespaces).isEmpty { vibeWord1 = word; return }
+        if vibeWord2.trimmingCharacters(in: .whitespaces).isEmpty { vibeWord2 = word; return }
+        if vibeWord3.trimmingCharacters(in: .whitespaces).isEmpty { vibeWord3 = word; return }
+    }
+
     private var vibeSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("VIBE WORDS (up to 3)", systemImage: "tag")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan)
+
+            // Zodiac-based suggestion chips
+            if currentVibeWords.count < 3 {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(user.birthChart.sunSign.rawValue) suggestions")
+                        .font(SynergyFont.body(11))
+                        .foregroundColor(.cosmicMuted)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Spacing.sm) {
+                            ForEach(vibeSuggestions.filter { !currentVibeWords.contains($0) }, id: \.self) { chip in
+                                Button { fillNextVibeSlot(chip) } label: {
+                                    Text(chip)
+                                        .font(SynergyFont.body(12))
+                                        .foregroundColor(.cosmicCyan)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.cosmicCyan.opacity(0.08))
+                                        .clipShape(Capsule())
+                                        .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.3), lineWidth: 1))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+
             VStack(spacing: Spacing.sm) {
                 vibeField("e.g. Intense", binding: $vibeWord1)
                 vibeField("e.g. Loyal", binding: $vibeWord2)
@@ -988,6 +1042,31 @@ struct EditProfileSheet: View {
         }
     }
 
+    private func promptSuggestions(for question: String) -> [String] {
+        switch question {
+        case PromptQuestion.wrongAboutSign.rawValue:
+            return ["We're actually the most loyal", "Not as [adjective] as they say", "We feel everything deeply"]
+        case PromptQuestion.perfectDay.rawValue:
+            return ["Coffee, long walk, no plans", "Slow morning, good book, good company", "Anywhere with good food and better conversation"]
+        case PromptQuestion.loveLanguage.rawValue:
+            return ["Quality time, no phones", "Acts of service, quietly", "Words — I need to hear it"]
+        case PromptQuestion.dealbreaker.rawValue:
+            return ["Unkindness", "Lack of curiosity", "Inconsistency"]
+        case PromptQuestion.moonSign.rawValue:
+            return ["…need a lot of alone time", "…overthink everything at 2am", "…feel everything before I process it"]
+        case PromptQuestion.firstDate.rawValue:
+            return ["Somewhere with good acoustics", "A walk — you can't fake chemistry walking", "Somewhere low-key, high-conversation"]
+        case PromptQuestion.venusSign.rawValue:
+            return ["I love deeply or not at all", "Slow to open, impossible to forget", "I show love through small, specific things"]
+        case PromptQuestion.greenFlag.rawValue:
+            return ["You remember the small things", "You're kind to strangers", "You have opinions and defend them gently"]
+        case PromptQuestion.rizz.rawValue:
+            return ["I will remember everything you tell me", "I'm a better listener than talker", "I'm exactly who I am on day one and day one thousand"]
+        default:
+            return []
+        }
+    }
+
     private func promptCard(index: Int) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
@@ -1017,6 +1096,34 @@ struct EditProfileSheet: View {
             ))
             .font(SynergyFont.body(14))
             .foregroundColor(.cosmicNeutral)
+
+            // Suggestion chips for this prompt
+            let suggestions = promptSuggestions(for: prompts[index].question)
+            if !suggestions.isEmpty && prompts[index].answer.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.sm) {
+                        ForEach(suggestions, id: \.self) { suggestion in
+                            Button {
+                                prompts[index] = ProfilePrompt(
+                                    id: prompts[index].id,
+                                    question: prompts[index].question,
+                                    answer: suggestion
+                                )
+                            } label: {
+                                Text(suggestion)
+                                    .font(SynergyFont.body(11))
+                                    .foregroundColor(.cosmicMuted)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.cosmicCard)
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().strokeBorder(Color.cosmicBorder, lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
         }
         .padding(Spacing.md)
         .background(Color.cosmicDarkAlt)

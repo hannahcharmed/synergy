@@ -264,32 +264,40 @@ struct SynastryDetailSheet: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        // iOS 15: NavigationView + .navigationViewStyle(.stack)
-        // iOS 16+: replace with NavigationStack (see SynergyApp.swift note)
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.xl) {
-                    scoreHeader
-                    radarSection
-                    layersSection
-                    aspectsSection
-                    icebreakerSection
-                }
-                .padding(Spacing.xl)
-            }
-            .background(Color.cosmicDark)
-            .navigationTitle("\(item.user.displayName) · Synastry")
-            .navigationBarTitleDisplayMode(.inline)
-            // iOS 16+: restore .toolbarBackground / .toolbarColorScheme
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+        // No NavigationView wrapper — avoids unwanted horizontal slide animation
+        // when the sheet is presented. Custom top bar replaces the nav bar.
+        ZStack(alignment: .top) {
+            Color.cosmicDark.ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Custom top bar
+                HStack {
+                    Text("\(item.user.displayName) · Synastry")
+                        .font(SynergyFont.headlineMedium(15))
+                        .foregroundColor(.cosmicNeutral)
+                    Spacer()
                     Button("Done") { dismiss() }
-                        .font(SynergyFont.body(14))
+                        .font(SynergyFont.body(14, weight: .semibold))
                         .foregroundColor(.cosmicCyan)
+                }
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
+                .background(Color.cosmicDark)
+                .overlay(alignment: .bottom) {
+                    Divider().overlay(Color.cosmicBorder)
+                }
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Spacing.xl) {
+                        scoreHeader
+                        radarSection
+                        layersSection
+                        aspectsSection
+                        icebreakerSection
+                    }
+                    .padding(Spacing.xl)
                 }
             }
         }
-        .navigationViewStyle(.stack)
     }
 
     private var scoreHeader: some View {

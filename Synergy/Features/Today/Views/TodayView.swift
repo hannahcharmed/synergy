@@ -53,6 +53,11 @@ struct TodayView: View {
             mercuryRetrogradeBanner
         }
 
+        // Aligned matches first — highest-signal content
+        if !vm.alignedMatches.isEmpty {
+            alignedMatchesSection
+        }
+
         if let h = vm.horoscope {
             cosmicWeatherBanner(h)
             horoscopeCard(h)
@@ -61,10 +66,6 @@ struct TodayView: View {
         // Cosmic streak
         if vm.streakDays >= 2 {
             streakCard
-        }
-
-        if !vm.alignedMatches.isEmpty {
-            alignedMatchesSection
         }
 
         // Weekly synastry report button
