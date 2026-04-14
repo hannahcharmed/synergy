@@ -39,19 +39,19 @@ struct ChatView: View {
                 statusBar
                 messageList
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(spacing: 0) {
-                    if isRecordingVoice {
-                        VoiceNoteRecorderView(isRecording: $isRecordingVoice) { duration in
-                            vm.sendVoiceNote(duration: duration)
-                        }
-                    } else {
-                        icebreakerBar
-                        inputBar
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                if isRecordingVoice {
+                    VoiceNoteRecorderView(isRecording: $isRecordingVoice) { duration in
+                        vm.sendVoiceNote(duration: duration)
                     }
+                } else {
+                    icebreakerBar
+                    inputBar
                 }
-                .background(Color.cosmicDark)
             }
+            .background(Color.cosmicDark)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { navBarContent }
@@ -525,7 +525,7 @@ struct MessageBubble: View {
                     if message.isFromCurrentUser {
                         LinearGradient.cosmicGradient.opacity(0.85)
                     } else {
-                        Color(hex: "#1E2229")
+                        Color.adaptive(dark: "#1E2229", light: "#E6DEFF")
                     }
                 }
                 .clipShape(ChatBubbleShape(isFromCurrentUser: message.isFromCurrentUser))
@@ -670,7 +670,7 @@ struct VoiceNotePlayerView: View {
 
     private var accentColor: Color { isFromCurrentUser ? .cosmicNeutral : .cosmicCyan }
     private var bgColor: Color {
-        isFromCurrentUser ? Color.white.opacity(0.15) : Color(hex: "#1E2229")
+        isFromCurrentUser ? Color.white.opacity(0.15) : Color.adaptive(dark: "#1E2229", light: "#E6DEFF")
     }
     private var timeLabel: String {
         let remaining = duration * (1 - playProgress)
