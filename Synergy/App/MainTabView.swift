@@ -42,32 +42,30 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Tab content
-            TabView(selection: $selectedTab) {
-                FeedView()
-                    .environmentObject(feedVM)
-                    .tag(Tab.feed)
+        TabView(selection: $selectedTab) {
+            FeedView()
+                .environmentObject(feedVM)
+                .tag(Tab.feed)
 
-                TodayView()
-                    .environmentObject(todayVM)
-                    .tag(Tab.today)
+            TodayView()
+                .environmentObject(todayVM)
+                .tag(Tab.today)
 
-                ConversationsView()
-                    .environmentObject(chatVM)
-                    .tag(Tab.chat)
+            ConversationsView()
+                .environmentObject(chatVM)
+                .tag(Tab.chat)
 
-                ProfileView()
-                    .environmentObject(profileVM)
-                    .tag(Tab.profile)
-            }
-            // Hide native tab bar — we use our own
-            .tabViewStyle(.page(indexDisplayMode: .never))
-
-            // Custom tab bar
+            ProfileView()
+                .environmentObject(profileVM)
+                .tag(Tab.profile)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        // Tab bar as a proper safeAreaInset so every page's bottom safe area
+        // includes the tab bar height — this is what lets ChatView's inputBar
+        // sit above the tab bar (not behind it).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             CosmicTabBar(selectedTab: $selectedTab, chatUnreadCount: chatVM.totalUnread)
         }
-        .ignoresSafeArea(edges: .bottom)
         .background(Color.cosmicDark)
         // Icebreaker handoff: switch to chat tab and pre-fill message
         .onChange(of: feedVM.pendingIcebreakerText) { text in
@@ -75,7 +73,6 @@ struct MainTabView: View {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                 selectedTab = .chat
             }
-            // Brief delay so the tab animation completes first
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 chatVM.messageText = text
                 feedVM.pendingIcebreakerText = nil
@@ -98,10 +95,12 @@ struct CosmicTabBar: View {
         }
         .padding(.horizontal, Spacing.md)
         .padding(.top, Spacing.md)
-        .padding(.bottom, 28) // safe area padding
+        .padding(.bottom, Spacing.sm)
         .background(
             ZStack {
+                // Extend background under the home indicator
                 Color.cosmicDarkAlt
+                    .ignoresSafeArea(edges: .bottom)
                 // Top border glow
                 VStack {
                     LinearGradient(
