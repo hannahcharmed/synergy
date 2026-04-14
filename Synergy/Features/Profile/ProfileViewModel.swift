@@ -42,6 +42,28 @@ final class ProfileViewModel: ObservableObject {
         )
     }
 
+    func saveProfile(bio: String, vibeWords: [String], prompts: [ProfilePrompt]) {
+        guard var u = user else { return }
+        let cleanBio = bio.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newProfile = UserProfile(
+            photos: u.profile.photos,
+            bio: cleanBio.isEmpty ? nil : cleanBio,
+            intentionTags: u.profile.intentionTags,
+            vibeWords: vibeWords.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
+            prompts: prompts,
+            promptAnswer: u.profile.promptAnswer,
+            height: u.profile.height,
+            occupation: u.profile.occupation
+        )
+        user = User(
+            id: u.id, displayName: u.displayName, age: u.age,
+            subscriptionTier: u.subscriptionTier, birthChart: u.birthChart,
+            profile: newProfile, locationDisplay: u.locationDisplay,
+            distanceMiles: u.distanceMiles, lastActive: u.lastActive,
+            isVerified: u.isVerified
+        )
+    }
+
     func upgradeTo(_ tier: SubscriptionTier) {
         guard let user = user else { return }
         // In production: trigger StoreKit 2 purchase flow

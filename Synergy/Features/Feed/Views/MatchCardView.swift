@@ -223,45 +223,13 @@ struct MatchCardView: View {
 
     // MARK: - Info Panel
 
+    // Card background is always dark so use explicit white-family colours in the panel.
     private var infoPanel: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Name + score
             HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: Spacing.sm) {
-                        Text("\(item.user.displayName), \(item.user.age)")
-                            .font(SynergyFont.headline(24))
-                            .foregroundColor(.cosmicNeutral)
-
-                        if item.user.isVerified {
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(.cosmicCyan)
-                        }
-                    }
-
-                    HStack(spacing: 6) {
-                        Text("\(item.user.birthChart.sunSign.symbol) \(item.user.birthChart.sunSign.rawValue)")
-                            .font(SynergyFont.body(13))
-                            .foregroundColor(.cosmicMuted)
-
-                        Text("·")
-                            .foregroundColor(.cosmicBorder)
-
-                        Text("\(item.user.birthChart.risingSign.rawValue) rising")
-                            .font(SynergyFont.body(13))
-                            .foregroundColor(.cosmicMuted)
-
-                        if let dist = item.user.distanceMiles {
-                            Text("· \(String(format: "%.1f", dist)) mi")
-                                .font(SynergyFont.body(13))
-                                .foregroundColor(.cosmicMuted)
-                        }
-                    }
-                }
-
+                cardNameBlock
                 Spacer()
-
                 MatchScoreBadge(score: item.cosmicScore, size: .medium)
             }
 
@@ -270,14 +238,13 @@ struct MatchCardView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 10))
-                        .foregroundColor(.cosmicCyan)
                     Text(boost.description)
                         .font(SynergyFont.body(12))
-                        .foregroundColor(.cosmicCyan)
                 }
+                .foregroundColor(Color(hex: "#00F0FF"))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Color.cosmicCyan.opacity(0.1))
+                .background(Color(hex: "#00F0FF").opacity(0.12))
                 .clipShape(Capsule())
             }
 
@@ -296,10 +263,10 @@ struct MatchCardView: View {
                     ForEach(item.user.profile.vibeWords, id: \.self) { word in
                         Text(word)
                             .font(SynergyFont.body(12))
-                            .foregroundColor(.cosmicMuted)
+                            .foregroundColor(Color.white.opacity(0.8))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.cosmicBorder.opacity(0.5))
+                            .background(Color.white.opacity(0.1))
                             .clipShape(Capsule())
                     }
                 }
@@ -320,13 +287,40 @@ struct MatchCardView: View {
                         Text("synastry")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                     }
-                    .foregroundColor(.cosmicMuted.opacity(0.6))
+                    .foregroundColor(Color.white.opacity(0.45))
                     Spacer()
                 }
             }
         }
         .padding(Spacing.lg)
         .padding(.bottom, Spacing.sm)
+    }
+
+    private var cardNameBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: Spacing.sm) {
+                Text("\(item.user.displayName), \(item.user.age)")
+                    .font(SynergyFont.headline(24))
+                    .foregroundColor(.white)
+                if item.user.isVerified {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#00F0FF"))
+                }
+            }
+            HStack(spacing: 6) {
+                Text("\(item.user.birthChart.sunSign.symbol) \(item.user.birthChart.sunSign.rawValue)")
+                    .font(SynergyFont.body(13))
+                Text("·")
+                Text("\(item.user.birthChart.risingSign.rawValue) rising")
+                    .font(SynergyFont.body(13))
+                if let dist = item.user.distanceMiles {
+                    Text("· \(String(format: "%.1f", dist)) mi")
+                        .font(SynergyFont.body(13))
+                }
+            }
+            .foregroundColor(Color.white.opacity(0.65))
+        }
     }
 
     private func promptRow(_ prompt: ProfilePrompt) -> some View {

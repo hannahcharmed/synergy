@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var activeSettings: SettingsDestination? = nil
     @State private var showShareCard = false
     @State private var shareImage: UIImage? = nil
+    @State private var showEditProfile = false
 
     enum SettingsDestination: String, Identifiable {
         case notifications, discovery, privacy, help
@@ -52,6 +53,12 @@ struct ProfileView: View {
                     ShareSheetView(items: [img])
                 }
             }
+            .sheet(isPresented: $showEditProfile) {
+                if let user = vm.user {
+                    EditProfileSheet(user: user)
+                        .environmentObject(vm)
+                }
+            }
             .navigationBarHidden(true)
         }
         .navigationViewStyle(.stack)
@@ -75,6 +82,9 @@ struct ProfileView: View {
                     shareImage = ShareableProfileCardView(user: user)
                         .snapshot(size: CGSize(width: 320, height: 568))
                     showShareCard = true
+                }
+                CosmicIconButton("pencil") {
+                    showEditProfile = true
                 }
                 CosmicIconButton("gearshape.fill") {
                     vm.showSettings = true
@@ -320,6 +330,7 @@ struct ProfileView: View {
 
     private var settingsRows: [SettingsRow] {
         [
+            .init(icon: "pencil",              title: "Edit Profile",       destructive: false),
             .init(icon: "bell.fill",           title: "Notifications",      destructive: false),
             .init(icon: "slider.horizontal.3", title: "Discovery settings", destructive: false),
             .init(icon: "lock.shield.fill",    title: "Privacy",            destructive: false),
@@ -331,6 +342,7 @@ struct ProfileView: View {
     private func settingsRow(_ row: SettingsRow) -> some View {
         Button {
             switch row.title {
+            case "Edit Profile":       showEditProfile = true
             case "Notifications":
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
@@ -600,6 +612,195 @@ struct PlaceholderSettingsSheet: View {
     }
 }
 
+// MARK: - Edit Profile Sheet
+
+struct EditProfileSheet: View {
+    @EnvironmentObject var vm: ProfileViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    let user: User
+
+    @State private var bio: String
+    @State private var vibeWord1: String
+    @State private var vibeWord2: String
+    @State private var vibeWord3: String
+    @State private var prompts: [ProfilePrompt]
+
+    init(user: User) {
+        self.user = user
+        _bio = State(initialValue: user.profile.bio ?? "")
+        let words = user.profile.vibeWords + ["", "", ""]
+        _vibeWord1 = State(initialValue: words[0])
+        _vibeWord2 = State(initialValue: words[1])
+        _vibeWord3 = State(initialValue: words[2])
+        _prompts = State(initialValue: user.profile.prompts)
+    }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: Spacing.xl) {
+                        bioSection
+                        vibeSection
+                        promptsSection
+                        Spacer(minLength: 40)
+                    }
+                    .padding(.horizontal, Spacing.xl)
+                    .padding(.top, Spacing.lg)
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.cosmicMuted)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") { saveAndDismiss() }
+                        .font(SynergyFont.body(15, weight: .semibold))
+                        .foregroundColor(.cosmicCyan)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    private var bioSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Label("BIO", systemImage: "text.alignleft")
+                .systemLabel()
+                .foregroundColor(.cosmicCyan)
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .fill(Color.cosmicDarkAlt)
+                    .overlay(RoundedRectangle(cornerRadius: Radius.md)
+                        .strokeBorder(Color.cosmicBorder, lineWidth: 1))
+                TextEditor(text: $bio)
+                    .font(SynergyFont.body(15))
+                    .foregroundColor(.cosmicNeutral)
+                    .padding(Spacing.sm)
+                    .background(Color.clear)
+                    .onAppear { UITextView.appearance().backgroundColor = .clear }
+            }
+            .frame(minHeight: 120, maxHeight: 160)
+        }
+    }
+
+    private var vibeSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Label("VIBE WORDS (up to 3)", systemImage: "tag")
+                .systemLabel()
+                .foregroundColor(.cosmicCyan)
+            VStack(spacing: Spacing.sm) {
+                vibeField("e.g. Intense", binding: $vibeWord1)
+                vibeField("e.g. Loyal", binding: $vibeWord2)
+                vibeField("e.g. Witchy", binding: $vibeWord3)
+            }
+        }
+    }
+
+    private func vibeField(_ placeholder: String, binding: Binding<String>) -> some View {
+        TextField(placeholder, text: binding)
+            .font(SynergyFont.body(15))
+            .foregroundColor(.cosmicNeutral)
+            .padding(Spacing.md)
+            .background(Color.cosmicDarkAlt)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md)
+                .strokeBorder(Color.cosmicBorder, lineWidth: 1))
+    }
+
+    private var promptsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                Label("PROMPTS (up to 3)", systemImage: "quote.bubble")
+                    .systemLabel()
+                    .foregroundColor(.cosmicCyan)
+                Spacer()
+                if prompts.count < 3 {
+                    Button {
+                        let questions = PromptQuestion.allCases
+                        let usedQuestions = Set(prompts.map { $0.question })
+                        if let next = questions.first(where: { !usedQuestions.contains($0.rawValue) }) {
+                            prompts.append(ProfilePrompt(question: next.rawValue, answer: ""))
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.cosmicCyan)
+                            .font(.system(size: 20))
+                    }
+                }
+            }
+            promptsList
+        }
+    }
+
+    @ViewBuilder
+    private var promptsList: some View {
+        if prompts.isEmpty {
+            Text("Tap + to add a prompt")
+                .font(SynergyFont.body(13))
+                .foregroundColor(.cosmicMuted)
+                .padding(Spacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.cosmicDarkAlt)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        } else {
+            VStack(spacing: Spacing.md) {
+                ForEach(prompts.indices, id: \.self) { idx in
+                    promptCard(index: idx)
+                }
+            }
+        }
+    }
+
+    private func promptCard(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Text(prompts[index].question.uppercased())
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(.cosmicCyan)
+                    .kerning(0.5)
+                    .lineLimit(1)
+                Spacer()
+                Button {
+                    prompts.remove(at: index)
+                } label: {
+                    Image(systemName: "xmark.circle")
+                        .foregroundColor(.cosmicMuted)
+                        .font(.system(size: 16))
+                }
+            }
+            TextField("Your answer...", text: Binding(
+                get: { prompts[index].answer },
+                set: { newVal in
+                    prompts[index] = ProfilePrompt(
+                        id: prompts[index].id,
+                        question: prompts[index].question,
+                        answer: newVal
+                    )
+                }
+            ))
+            .font(SynergyFont.body(14))
+            .foregroundColor(.cosmicNeutral)
+        }
+        .padding(Spacing.md)
+        .background(Color.cosmicDarkAlt)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        .overlay(RoundedRectangle(cornerRadius: Radius.md)
+            .strokeBorder(Color.cosmicBorder, lineWidth: 1))
+    }
+
+    private func saveAndDismiss() {
+        let words = [vibeWord1, vibeWord2, vibeWord3]
+        vm.saveProfile(bio: bio, vibeWords: words, prompts: prompts)
+        dismiss()
+    }
+}
+
 // MARK: - Shareable Cosmic Profile Card (appended here so Xcode project can find it)
 
 private struct ShareableProfileCardView: View {
@@ -763,11 +964,19 @@ private struct ShareSheetView: UIViewControllerRepresentable {
 private extension View {
     func snapshot(size: CGSize) -> UIImage {
         let controller = UIHostingController(rootView: self.ignoresSafeArea())
+        // Always render in dark mode so cosmic card colours look correct
+        controller.overrideUserInterfaceStyle = .dark
         controller.view.bounds = CGRect(origin: .zero, size: size)
-        controller.view.backgroundColor = .clear
+        controller.view.backgroundColor = UIColor(Color(hex: "#0D0A1A"))
+
+        // Force layout before rendering
+        controller.view.setNeedsLayout()
+        controller.view.layoutIfNeeded()
+
         let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { _ in
-            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        return renderer.image { ctx in
+            // layer.render is more reliable than drawHierarchy for off-screen views
+            controller.view.layer.render(in: ctx.cgContext)
         }
     }
 }
