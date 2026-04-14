@@ -18,48 +18,7 @@ struct TodayView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: Spacing.xl) {
                             todayNavBar
-
-                            // Transit alert banner
-                            if let alert = vm.activeTransitAlert, vm.showTransitAlert {
-                                transitAlertBanner(alert)
-                                    .transition(.move(edge: .top).combined(with: .opacity))
-                            }
-
-                            // Mercury retrograde warning
-                            if vm.isMercuryRetrograde {
-                                mercuryRetrogradeBanner
-                            }
-
-                            if let h = vm.horoscope {
-                                cosmicWeatherBanner(h)
-                                horoscopeCard(h)
-                            }
-
-                            // Cosmic streak
-                            if vm.streakDays >= 2 {
-                                streakCard
-                            }
-
-                            if !vm.activeRituals.isEmpty {
-                                ritualSection(title: "ACTIVE_RITUALS", events: vm.activeRituals)
-                            }
-                            if !vm.alignedMatches.isEmpty {
-                                alignedMatchesSection
-                            }
-                            if !vm.upcomingRituals.isEmpty {
-                                ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
-                            }
-
-                            // Upcoming transit forecast cards
-                            if !vm.upcomingTransits.isEmpty {
-                                upcomingTransitsSection
-                            }
-
-                            // Weekly synastry report button
-                            if !vm.weeklyReport.isEmpty {
-                                weeklyReportCard
-                            }
-
+                            mainContent
                             Spacer(minLength: 100)
                         }
                         .padding(.horizontal, Spacing.xl)
@@ -77,6 +36,52 @@ struct TodayView: View {
             .animation(.easeInOut(duration: 0.3), value: vm.showTransitAlert)
         }
         .navigationViewStyle(.stack)
+    }
+
+    // MARK: - Main Content (extracted to avoid type-checker timeout)
+
+    @ViewBuilder
+    private var mainContent: some View {
+        // Transit alert banner
+        if let alert = vm.activeTransitAlert, vm.showTransitAlert {
+            transitAlertBanner(alert)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+
+        // Mercury retrograde warning
+        if vm.isMercuryRetrograde {
+            mercuryRetrogradeBanner
+        }
+
+        if let h = vm.horoscope {
+            cosmicWeatherBanner(h)
+            horoscopeCard(h)
+        }
+
+        // Cosmic streak
+        if vm.streakDays >= 2 {
+            streakCard
+        }
+
+        if !vm.activeRituals.isEmpty {
+            ritualSection(title: "ACTIVE_RITUALS", events: vm.activeRituals)
+        }
+        if !vm.alignedMatches.isEmpty {
+            alignedMatchesSection
+        }
+        if !vm.upcomingRituals.isEmpty {
+            ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
+        }
+
+        // Upcoming transit forecast cards
+        if !vm.upcomingTransits.isEmpty {
+            upcomingTransitsSection
+        }
+
+        // Weekly synastry report button
+        if !vm.weeklyReport.isEmpty {
+            weeklyReportCard
+        }
     }
 
     // MARK: - Nav Bar
