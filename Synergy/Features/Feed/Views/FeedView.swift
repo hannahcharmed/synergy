@@ -36,9 +36,14 @@ struct FeedView: View {
             }
             .overlay {
                 if vm.showMatchAlert, let match = vm.latestMatch {
-                    MatchAlertOverlay(item: match) {
-                        vm.showMatchAlert = false
-                    }
+                    MatchAlertOverlay(
+                        item: match,
+                        onDismiss: { vm.showMatchAlert = false },
+                        onSendIcebreaker: { icebreakerText in
+                            vm.showMatchAlert = false
+                            vm.pendingIcebreakerText = icebreakerText
+                        }
+                    )
                     .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -113,22 +118,41 @@ struct FeedView: View {
     // MARK: - Action Buttons
 
     private var actionButtons: some View {
-        HStack(spacing: Spacing.xl) {
-            // Pass
-            CosmicIconButton("xmark", variant: .outlined, size: 60) {
-                if let item = vm.visibleItems.first { vm.pass(item) }
+        VStack(spacing: Spacing.sm) {
+            // Undo hint label (shown when undo is available)
+            if vm.lastSwipedItem != nil {
+                Text("Tap \u{21BA} to undo your last pass")
+                    .font(SynergyFont.body(11))
+                    .foregroundColor(.cosmicMuted)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            // Super Like (star)
-            CosmicIconButton("star.fill", variant: .gradient, size: 52) {
-                if let item = vm.visibleItems.first { vm.superLike(item) }
-            }
+            HStack(spacing: Spacing.xl) {
+                // Pass
+                CosmicIconButton("xmark", variant: .outlined, size: 60) {
+                    if let item = vm.visibleItems.first { vm.pass(item) }
+                }
 
-            // Like
-            CosmicIconButton("heart.fill", variant: .outlined, size: 60) {
-                if let item = vm.visibleItems.first { vm.like(item) }
+                // Undo last pass (only visible when available)
+                if vm.lastSwipedItem != nil {
+                    CosmicIconButton("arrow.uturn.backward", variant: .gradient, size: 44) {
+                        vm.undoLastSwipe()
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                }
+
+                // Super Like (star)
+                CosmicIconButton("star.fill", variant: .gradient, size: 52) {
+                    if let item = vm.visibleItems.first { vm.superLike(item) }
+                }
+
+                // Like
+                CosmicIconButton("heart.fill", variant: .outlined, size: 60) {
+                    if let item = vm.visibleItems.first { vm.like(item) }
+                }
             }
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: vm.lastSwipedItem?.id)
         .padding(.vertical, Spacing.lg)
     }
 
@@ -171,6 +195,7 @@ struct FeedView: View {
 struct MatchAlertOverlay: View {
     let item: FeedItem
     let onDismiss: () -> Void
+    var onSendIcebreaker: ((String) -> Void)? = nil
 
     @State private var scale: CGFloat = 0.7
     @State private var opacity: Double = 0
@@ -203,7 +228,9 @@ struct MatchAlertOverlay: View {
                 }
 
                 VStack(spacing: Spacing.sm) {
-                    CosmicButton("Send icebreaker", variant: .gradient) { onDismiss() }
+                    CosmicButton("Send icebreaker", variant: .gradient) {
+                        onSendIcebreaker?(item.aiIcebreaker)
+                    }
                     Button("Keep exploring") { onDismiss() }
                         .font(SynergyFont.body(14))
                         .foregroundColor(.cosmicMuted)

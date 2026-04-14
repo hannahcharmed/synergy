@@ -165,10 +165,15 @@ final class ChatViewModel: ObservableObject {
                 "That's such a Scorpio thing to say and I mean that as the highest compliment.",
                 "My Venus is literally doing a trine right now."
             ]
+            let replyText = replies.randomElement()!
+            NotificationService.shared.scheduleMessageNotification(
+                senderName: conv.otherUser.displayName,
+                preview: replyText
+            )
             let reply = Message(
                 conversationId: conv.id,
                 senderId: conv.otherUser.id,
-                content: replies.randomElement()!,
+                content: replyText,
                 isFromCurrentUser: false
             )
             if var active = self.activeConversation, active.id == conv.id {

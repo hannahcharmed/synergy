@@ -10,6 +10,8 @@ final class FeedViewModel: ObservableObject {
     @Published var showMatchAlert = false
     @Published var latestMatch: FeedItem? = nil
     @Published var selectedItem: FeedItem? = nil  // Detail sheet
+    @Published var lastSwipedItem: FeedItem? = nil  // For undo
+    @Published var pendingIcebreakerText: String? = nil  // For icebreaker→chat handoff
 
     private var swipedIds: Set<UUID> = []
 
@@ -46,6 +48,10 @@ final class FeedViewModel: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.showMatchAlert = true
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+                NotificationService.shared.scheduleMatchNotification(
+                    matchName: item.user.displayName,
+                    cosmicScore: item.cosmicScore
+                )
             }
         }
         advanceDeck()
@@ -56,9 +62,22 @@ final class FeedViewModel: ObservableObject {
         guard !swipedIds.contains(item.id) else { return }
         swipedIds.insert(item.id)
         lastAction = .pass
+        lastSwipedItem = item
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         advanceDeck()
         logEvent("feed_pass", item: item)
+    }
+
+    func undoLastSwipe() {
+        guard let item = lastSwipedItem, currentIndex > 0 else { return }
+        swipedIds.remove(item.id)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            currentIndex -= 1
+        }
+        lastSwipedItem = nil
+        lastAction = nil
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        logEvent("feed_undo", item: item)
     }
 
     func superLike(_ item: FeedItem) {

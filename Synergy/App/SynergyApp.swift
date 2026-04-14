@@ -65,6 +65,9 @@ struct SynergyApp: App {
         // Transparent TextEditor background
         // (iOS 16 equivalent: .scrollContentBackground(.hidden) per TextEditor)
         UITextView.appearance().backgroundColor = .clear
+
+        // Request local notification permission (match & message alerts)
+        NotificationService.shared.requestPermission()
     }
 
     var body: some Scene {

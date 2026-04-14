@@ -50,6 +50,11 @@ struct TodayView: View {
                                 ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
                             }
 
+                            // Upcoming transit forecast cards
+                            if !vm.upcomingTransits.isEmpty {
+                                upcomingTransitsSection
+                            }
+
                             // Weekly synastry report button
                             if !vm.weeklyReport.isEmpty {
                                 weeklyReportCard
@@ -374,6 +379,75 @@ struct TodayView: View {
             .cosmicCard()
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Upcoming Transits Section
+
+    private var upcomingTransitsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                Text("UPCOMING_TRANSITS")
+                    .systemLabel()
+                Spacer()
+                Text("FORECAST · 14 DAYS")
+                    .systemLabel()
+                    .foregroundColor(.cosmicMuted.opacity(0.6))
+            }
+
+            ForEach(vm.upcomingTransits) { transit in
+                upcomingTransitCard(transit)
+            }
+        }
+    }
+
+    private func upcomingTransitCard(_ transit: UpcomingTransit) -> some View {
+        let accentColor = Color(hex: transit.colorHex)
+        return HStack(alignment: .top, spacing: Spacing.md) {
+            // Planet symbol circle
+            ZStack {
+                Circle()
+                    .fill(accentColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Text(transit.planetSymbol)
+                    .font(.system(size: transit.isToday ? 20 : 17))
+                    .foregroundColor(accentColor)
+            }
+            .cosmicGlow(color: accentColor, radius: transit.isImminent ? 8 : 0)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text("\(transit.planet) \(transit.action) \(transit.target)")
+                        .font(SynergyFont.body(14, weight: .medium))
+                        .foregroundColor(.cosmicNeutral)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    // Day badge
+                    Text(transit.isToday ? "TODAY" : "IN \(transit.daysUntil)D")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundColor(transit.isToday ? accentColor : .cosmicMuted)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background((transit.isToday ? accentColor : Color.cosmicBorder).opacity(transit.isToday ? 0.18 : 1))
+                        .clipShape(Capsule())
+                }
+                Text(transit.impactDescription)
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicNeutral.opacity(0.65))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(Spacing.md)
+        .background(Color.cosmicCard)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(
+                    transit.isImminent ? accentColor : Color.cosmicBorder,
+                    lineWidth: transit.isImminent ? 1.5 : 1
+                )
+                .opacity(transit.isImminent ? 0.5 : 1)
+        )
     }
 
     private var loadingView: some View {

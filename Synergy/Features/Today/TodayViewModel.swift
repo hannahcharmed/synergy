@@ -13,6 +13,21 @@ struct TransitAlert: Identifiable {
     var isExpired: Bool { Date() > expiresAt }
 }
 
+// MARK: - Upcoming Transit Card
+
+struct UpcomingTransit: Identifiable {
+    let id = UUID()
+    let planet: String
+    let planetSymbol: String
+    let action: String       // e.g. "enters", "trines your natal", "goes retrograde"
+    let target: String       // e.g. "your 7th House", "Venus", ""
+    let daysUntil: Int       // 0 = today
+    let impactDescription: String
+    let colorHex: String
+    var isToday: Bool { daysUntil == 0 }
+    var isImminent: Bool { daysUntil <= 2 }
+}
+
 // MARK: - Weekly Synastry Report Entry
 
 struct WeeklyReportEntry: Identifiable {
@@ -43,6 +58,9 @@ final class TodayViewModel: ObservableObject {
     @Published var weeklyReport: [WeeklyReportEntry] = []
     @Published var showWeeklyReport = false
 
+    // Upcoming transit predictions
+    @Published var upcomingTransits: [UpcomingTransit] = []
+
     // Cosmic streak (days opened in a row — persisted via UserDefaults)
     @Published var streakDays: Int = 0
 
@@ -60,6 +78,7 @@ final class TodayViewModel: ObservableObject {
             self.isMercuryRetrograde = self.checkMercuryRetrograde()
             self.activeTransitAlert = self.buildTransitAlert()
             self.weeklyReport = self.buildWeeklyReport()
+            self.upcomingTransits = self.buildUpcomingTransits()
             self.isLoading = false
         }
     }
@@ -122,6 +141,48 @@ final class TodayViewModel: ObservableObject {
             boostPercent: 15,
             expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()) ?? Date()
         )
+    }
+
+    // MARK: - Upcoming Transits (mock predictions)
+
+    private func buildUpcomingTransits() -> [UpcomingTransit] {
+        [
+            UpcomingTransit(
+                planet: "Venus", planetSymbol: "♀",
+                action: "enters", target: "your 7th House",
+                daysUntil: 0,
+                impactDescription: "Romantic magnetism peaks. Open invitations, direct confessions — this window lasts 18 days.",
+                colorHex: "#FF6B9D"
+            ),
+            UpcomingTransit(
+                planet: "Jupiter", planetSymbol: "♃",
+                action: "trines your natal", target: "Venus",
+                daysUntil: 3,
+                impactDescription: "Expansion in love. New connections made now carry long-term potential.",
+                colorHex: "#FFD700"
+            ),
+            UpcomingTransit(
+                planet: "Full Moon", planetSymbol: "○",
+                action: "in your", target: "5th House",
+                daysUntil: 5,
+                impactDescription: "Creative expression and playfulness amplified. Ideal for first dates and bold moves.",
+                colorHex: "#C0C0C0"
+            ),
+            UpcomingTransit(
+                planet: "Mercury", planetSymbol: "☿",
+                action: "goes retrograde in", target: "Gemini",
+                daysUntil: 11,
+                impactDescription: "Review conversations, not new ones. Back up important messages now.",
+                colorHex: "#6B7280"
+            ),
+            UpcomingTransit(
+                planet: "Mars", planetSymbol: "♂",
+                action: "sextiles your natal", target: "Sun",
+                daysUntil: 14,
+                impactDescription: "Energy and confidence align. Your magnetism is at its highest all month.",
+                colorHex: "#FF4444"
+            ),
+        ]
     }
 
     // MARK: - Weekly Report (mock)
