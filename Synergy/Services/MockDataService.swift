@@ -147,21 +147,67 @@ enum MockData {
     // MARK: - Match Profiles
 
     static let matchProfiles: [User] = [
-        makeUser(name: "Jade",  age: 28, sun: .scorpio,    moon: .cancer,   rising: .libra,       city: "London", bio: "Astrology nerd, depth over breadth. Ask me about my 8th house.",               prompt: "We're not as scary as we seem — just selective.",                  vibes: ["Intense", "Loyal", "Witchy"],    distance: 2.4, photo: "jade_1",  minutesLastActive: 2),
-        makeUser(name: "Freya", age: 26, sun: .pisces,     moon: .scorpio,  rising: .capricorn,   city: "London", bio: "Marine biologist by day, stargazer by night. Let's talk Jungian archetypes.", prompt: "Pisces are not flaky — we just live in seventeen dimensions at once.", vibes: ["Dreamy", "Deep", "Creative"],    distance: 3.1, photo: "freya_1", minutesLastActive: 45),
-        makeUser(name: "Sol",   age: 29, sun: .aquarius,   moon: .gemini,   rising: .sagittarius, city: "London", bio: "Musician. Philosopher. Terrible at texting back but incredible in person.",   prompt: "Aquarians are the most personal of the impersonal signs.",           vibes: ["Electric", "Free", "Curious"],   distance: 5.7, photo: "sol_1",   minutesLastActive: 180),
-        makeUser(name: "Aria",  age: 27, sun: .cancer,     moon: .taurus,   rising: .virgo,       city: "London", bio: "Chef, homebody, occasional chaos agent. My love language is a slow Sunday.",  prompt: "We cry at adverts AND fix everything — the duality is the point.",   vibes: ["Nurturing", "Grounded", "Real"], distance: 1.8, photo: "aria_1",  minutesLastActive: 600),
-        makeUser(name: "Orion", age: 30, sun: .capricorn,  moon: .scorpio,  rising: .aries,       city: "London", bio: "Architect. I build things that outlast me — including relationships.",        prompt: "Capricorns show love by quietly solving your problems.",             vibes: ["Ambitious", "Steady", "Private"],distance: 4.2, photo: "orion_1", minutesLastActive: 1200),
-        makeUser(name: "Luna",  age: 25, sun: .libra,      moon: .aquarius, rising: .gemini,      city: "London", bio: "Journalist. I write about the spaces between things — relationships, cities.", prompt: "Libras don't avoid conflict — we just prefer a nicer word for it.", vibes: ["Witty", "Fair", "Magnetic"],     distance: 2.9, photo: "luna_1",  minutesLastActive: 3),
+        makeUser(name: "Jade",  age: 28, sun: .scorpio,    moon: .cancer,   rising: .libra,
+                 city: "London", bio: "Astrology nerd, depth over breadth. Ask me about my 8th house.",
+                 vibes: ["Intense", "Loyal", "Witchy"],    distance: 2.4, photoCount: 4,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,    answer: "We're not as scary as we seem — just selective."),
+                     ProfilePrompt(question: PromptQuestion.perfectDay.rawValue,        answer: "Full moon, red wine, three hour conversation that fixes everything."),
+                     ProfilePrompt(question: PromptQuestion.loveLanguage.rawValue,      answer: "Undivided attention. And probably a heated debate about something."),
+                 ], minutesLastActive: 2),
+        makeUser(name: "Freya", age: 26, sun: .pisces,     moon: .scorpio,  rising: .capricorn,
+                 city: "London", bio: "Marine biologist by day, stargazer by night. Let's talk Jungian archetypes.",
+                 vibes: ["Dreamy", "Deep", "Creative"],    distance: 3.1, photoCount: 3,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,  answer: "Pisces aren't flaky — we live in seventeen dimensions at once."),
+                     ProfilePrompt(question: PromptQuestion.moonSign.rawValue,         answer: "…need three days of silence after a dinner party."),
+                     ProfilePrompt(question: PromptQuestion.firstDate.rawValue,        answer: "pick somewhere weird. A midnight museum, a harbour, anything with water."),
+                 ], minutesLastActive: 45),
+        makeUser(name: "Sol",   age: 29, sun: .aquarius,   moon: .gemini,   rising: .sagittarius,
+                 city: "London", bio: "Musician. Philosopher. Terrible at texting back but incredible in person.",
+                 vibes: ["Electric", "Free", "Curious"],   distance: 5.7, photoCount: 2,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue, answer: "Aquarians are the most personal of the impersonal signs."),
+                     ProfilePrompt(question: PromptQuestion.venusSign.rawValue,       answer: "I send long voice notes about ideas at 1am. Take it or leave it."),
+                 ], minutesLastActive: 180),
+        makeUser(name: "Aria",  age: 27, sun: .cancer,     moon: .taurus,   rising: .virgo,
+                 city: "London", bio: "Chef, homebody, occasional chaos agent. My love language is a slow Sunday.",
+                 vibes: ["Nurturing", "Grounded", "Real"], distance: 1.8, photoCount: 5,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue, answer: "We cry at adverts AND fix everything. The duality is the point."),
+                     ProfilePrompt(question: PromptQuestion.perfectDay.rawValue,     answer: "Farmers market → cook for five hours → feed everyone I love."),
+                     ProfilePrompt(question: PromptQuestion.greenFlag.rawValue,      answer: "I will remember the thing you mentioned once six months ago."),
+                 ], minutesLastActive: 600),
+        makeUser(name: "Orion", age: 30, sun: .capricorn,  moon: .scorpio,  rising: .aries,
+                 city: "London", bio: "Architect. I build things that outlast me — including relationships.",
+                 vibes: ["Ambitious", "Steady", "Private"], distance: 4.2, photoCount: 2,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.loveLanguage.rawValue,    answer: "Quietly solving your problems before you notice they existed."),
+                     ProfilePrompt(question: PromptQuestion.dealbreaker.rawValue,     answer: "Small thinking."),
+                 ], minutesLastActive: 1200),
+        makeUser(name: "Luna",  age: 25, sun: .libra,      moon: .aquarius, rising: .gemini,
+                 city: "London", bio: "Journalist. I write about the spaces between things — relationships, cities.",
+                 vibes: ["Witty", "Fair", "Magnetic"],     distance: 2.9, photoCount: 4,
+                 prompts: [
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue, answer: "Libras don't avoid conflict — we just prefer a nicer word for it."),
+                     ProfilePrompt(question: PromptQuestion.rizz.rawValue,           answer: "I will interview you like a journalist on the first date. It's a compliment."),
+                     ProfilePrompt(question: PromptQuestion.firstDate.rawValue,      answer: "A bookshop, obviously. What you pick up first tells me everything."),
+                 ], minutesLastActive: 3),
     ]
 
     private static func makeUser(
         name: String, age: Int,
         sun: ZodiacSign, moon: ZodiacSign, rising: ZodiacSign,
-        city: String, bio: String, prompt: String, vibes: [String],
-        distance: Double, photo: String, minutesLastActive: Double
+        city: String, bio: String, vibes: [String],
+        distance: Double, photoCount: Int,
+        prompts: [ProfilePrompt],
+        minutesLastActive: Double
     ) -> User {
         let userId = UUID()
+        let lowerName = name.lowercased()
+        // Generate placeholder photo names for the gallery
+        let photos = (1...max(1, photoCount)).map { "\(lowerName)_\($0)" }
+
         let positions = [
             PlanetaryPosition(planet: .sun,       sign: sun,    degree: Double.random(in: 0...360), houseNumber: 1, isRetrograde: false),
             PlanetaryPosition(planet: .moon,      sign: moon,   degree: Double.random(in: 0...360), houseNumber: 4, isRetrograde: false),
@@ -179,9 +225,9 @@ enum MockData {
         )
 
         let profile = UserProfile(
-            photos: [photo], bio: bio,
+            photos: photos, bio: bio,
             intentionTags: [.aSoulmate, .growth].shuffled().prefix(2).map { $0 },
-            vibeWords: vibes, promptAnswer: prompt
+            vibeWords: vibes, prompts: prompts
         )
 
         return User(

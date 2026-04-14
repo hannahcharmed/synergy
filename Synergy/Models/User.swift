@@ -19,6 +19,33 @@ struct User: Codable, Identifiable {
     }
 }
 
+// MARK: - Profile Prompt
+
+struct ProfilePrompt: Codable, Identifiable {
+    let id: UUID
+    let question: String
+    let answer: String
+
+    init(id: UUID = UUID(), question: String, answer: String) {
+        self.id = id
+        self.question = question
+        self.answer = answer
+    }
+}
+
+// Common Hinge-style prompt questions
+enum PromptQuestion: String, CaseIterable {
+    case wrongAboutSign   = "What people always get wrong about my sign"
+    case perfectDay       = "My perfect Sunday looks like"
+    case loveLanguage     = "My love language is"
+    case dealbreaker      = "My biggest dealbreaker"
+    case moonSign         = "My moon sign explains why I"
+    case firstDate        = "On a first date I always"
+    case venusSign        = "My Venus sign in real life"
+    case greenFlag        = "My biggest green flag"
+    case rizz             = "You should know about me"
+}
+
 // MARK: - User Profile
 
 struct UserProfile: Codable {
@@ -26,9 +53,28 @@ struct UserProfile: Codable {
     var bio: String?
     var intentionTags: [RelationshipIntention]
     var vibeWords: [String]         // 3-word vibe tags
-    var promptAnswer: String?       // "What do people always get wrong about your sign?"
+    var prompts: [ProfilePrompt]    // Hinge-style Q&A prompts (up to 3)
+    var promptAnswer: String?       // Legacy single prompt answer
     var height: String?
     var occupation: String?
+
+    // Convenience: photos count for gallery display
+    var photoCount: Int { photos.count }
+
+    init(photos: [String], bio: String? = nil,
+         intentionTags: [RelationshipIntention],
+         vibeWords: [String], prompts: [ProfilePrompt] = [],
+         promptAnswer: String? = nil,
+         height: String? = nil, occupation: String? = nil) {
+        self.photos = photos
+        self.bio = bio
+        self.intentionTags = intentionTags
+        self.vibeWords = vibeWords
+        self.prompts = prompts
+        self.promptAnswer = promptAnswer
+        self.height = height
+        self.occupation = occupation
+    }
 }
 
 // MARK: - Subscription Tiers

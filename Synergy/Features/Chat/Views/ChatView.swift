@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var selectedUnmatchReason: UnmatchReason? = nil
     @State private var selectedReportReason: ReportReason? = nil
     @State private var isRecordingVoice = false
+    @State private var showingMatchProfile = false
 
     private var messages: [Message] {
         vm.activeConversation?.messages ?? conversation.messages
@@ -37,23 +38,30 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 statusBar
                 messageList
-                if isRecordingVoice {
-                    VoiceNoteRecorderView(isRecording: $isRecordingVoice) { duration in
-                        vm.sendVoiceNote(duration: duration)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 0) {
+                    if isRecordingVoice {
+                        VoiceNoteRecorderView(isRecording: $isRecordingVoice) { duration in
+                            vm.sendVoiceNote(duration: duration)
+                        }
+                    } else {
+                        icebreakerBar
+                        inputBar
                     }
-                } else {
-                    icebreakerBar
-                    inputBar
                 }
+                .background(Color.cosmicDark)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { navBarContent }
-        .ignoresSafeArea(edges: .bottom)
         .onAppear { vm.openConversation(conversation) }
         .sheet(isPresented: $showSynastry) { SynastryDetailSheet(item: synastryItem) }
         .sheet(isPresented: $showUnmatchSheet) { unmatchSheet }
         .sheet(isPresented: $showReportSheet) { reportSheet }
+        .sheet(isPresented: $showingMatchProfile) {
+            MatchProfileSheet(user: conversation.otherUser)
+        }
     }
 
     // MARK: - Status Bar
@@ -91,33 +99,36 @@ struct ChatView: View {
     @ToolbarContentBuilder
     private var navBarContent: some ToolbarContent {
         ToolbarItem(placement: .principal) {
-            HStack(spacing: Spacing.sm) {
-                ZStack {
-                    Circle().fill(LinearGradient.cosmicGradient).frame(width: 32, height: 32)
-                    Text(conversation.otherUser.displayName.prefix(1))
-                        .font(SynergyFont.headlineMedium(14))
-                        .foregroundColor(.cosmicDark)
-                    if conversation.otherUser.isOnline {
-                        Circle()
-                            .fill(Color.cosmicSuccess)
-                            .frame(width: 9, height: 9)
-                            .overlay(Circle().strokeBorder(Color.cosmicDarkAlt, lineWidth: 1.5))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            Button { showingMatchProfile = true } label: {
+                HStack(spacing: Spacing.sm) {
+                    ZStack {
+                        Circle().fill(LinearGradient.cosmicGradient).frame(width: 32, height: 32)
+                        Text(conversation.otherUser.displayName.prefix(1))
+                            .font(SynergyFont.headlineMedium(14))
+                            .foregroundColor(.cosmicDark)
+                        if conversation.otherUser.isOnline {
+                            Circle()
+                                .fill(Color.cosmicSuccess)
+                                .frame(width: 9, height: 9)
+                                .overlay(Circle().strokeBorder(Color.cosmicDarkAlt, lineWidth: 1.5))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(conversation.otherUser.displayName)
+                            .font(SynergyFont.headlineMedium(15))
+                            .foregroundColor(.cosmicNeutral)
+                        Text(conversation.otherUser.isOnline ? "Online now" :
+                             conversation.otherUser.birthChart.sunSign.rawValue
+                             + " \(conversation.otherUser.birthChart.sunSign.symbol)")
+                            .systemLabel()
+                            .foregroundColor(conversation.otherUser.isOnline ? .cosmicSuccess : .cosmicMuted)
                     }
                 }
-                .frame(width: 32, height: 32)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(conversation.otherUser.displayName)
-                        .font(SynergyFont.headlineMedium(15))
-                        .foregroundColor(.cosmicNeutral)
-                    Text(conversation.otherUser.isOnline ? "Online now" :
-                         conversation.otherUser.birthChart.sunSign.rawValue
-                         + " \(conversation.otherUser.birthChart.sunSign.symbol)")
-                        .systemLabel()
-                        .foregroundColor(conversation.otherUser.isOnline ? .cosmicSuccess : .cosmicMuted)
-                }
             }
+            .buttonStyle(.plain)
         }
 
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -290,7 +301,6 @@ struct ChatView: View {
             }
             .padding(.horizontal, Spacing.xl)
             .padding(.vertical, Spacing.md)
-            .padding(.bottom, 24)
             .background(Color.cosmicDark)
         }
     }
