@@ -43,7 +43,7 @@ final class ProfileViewModel: ObservableObject {
     }
 
     func saveProfile(bio: String, vibeWords: [String], prompts: [ProfilePrompt]) {
-        guard var u = user else { return }
+        guard let u = user else { return }
         let cleanBio = bio.trimmingCharacters(in: .whitespacesAndNewlines)
         let newProfile = UserProfile(
             photos: u.profile.photos,

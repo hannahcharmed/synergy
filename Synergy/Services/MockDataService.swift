@@ -411,3 +411,52 @@ enum MockData {
         ),
     ]
 }
+
+// MARK: - Notification Service
+// Appended here so no new Xcode project registration is needed.
+// In production, move to its own target-registered file.
+
+import UserNotifications
+
+final class NotificationService {
+    static let shared = NotificationService()
+    private init() {}
+
+    func requestPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: [.alert, .sound, .badge]
+        ) { granted, _ in
+            print("[Notifications] Permission granted: \(granted)")
+        }
+    }
+
+    func scheduleMatchNotification(matchName: String, cosmicScore: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = "It's a cosmic match! ✦"
+        content.body = "You and \(matchName) liked each other — \(cosmicScore)% compatibility."
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1.5, repeats: false)
+        let req = UNNotificationRequest(identifier: "match-\(UUID().uuidString)", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(req)
+    }
+
+    func scheduleMessageNotification(senderName: String, preview: String) {
+        let content = UNMutableNotificationContent()
+        content.title = senderName
+        content.body = preview
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2.0, repeats: false)
+        let req = UNNotificationRequest(identifier: "message-\(UUID().uuidString)", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(req)
+    }
+
+    func scheduleTransitNotification(planet: String, description: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "\(planet) transit active ✦"
+        content.body = description
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1.0, repeats: false)
+        let req = UNNotificationRequest(identifier: "transit-\(UUID().uuidString)", content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(req)
+    }
+}
