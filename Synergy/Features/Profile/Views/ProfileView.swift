@@ -183,7 +183,7 @@ struct ProfileView: View {
             if pct < 100 {
                 completionTips(for: user)
             } else {
-                Text("Your profile is fully optimised — more matches incoming.")
+                Text("Your profile is fully optimised. More matches incoming.")
                     .font(SynergyFont.body(12))
                     .foregroundColor(.cosmicSuccess)
                     .lineSpacing(2)
@@ -218,22 +218,22 @@ struct ProfileView: View {
     private func buildCompletionTips(for user: User) -> [String] {
         var tips: [String] = []
         if user.profile.bio == nil || (user.profile.bio?.isEmpty ?? true) {
-            tips.append("Add a bio to show your personality (+20 pts)")
+            tips.append("Add a bio to show your personality")
         }
         if user.profile.photos.count < 2 {
-            tips.append("Add \(2 - user.profile.photos.count) more photo(s) (+10 pts each)")
+            tips.append("Add \(2 - user.profile.photos.count) more photo(s)")
         }
         if user.profile.vibeWords.count < 3 {
-            tips.append("Add \(3 - user.profile.vibeWords.count) vibe word(s) (+5 pts each)")
+            tips.append("Add \(3 - user.profile.vibeWords.count) vibe word(s)")
         }
         if user.profile.prompts.count < 3 {
-            tips.append("Answer \(3 - user.profile.prompts.count) more prompt(s) (+10 pts each)")
+            tips.append("Answer \(3 - user.profile.prompts.count) more prompt(s)")
         }
         if user.profile.height == nil {
-            tips.append("Add your height (+8 pts)")
+            tips.append("Add your height")
         }
         if user.profile.occupation == nil {
-            tips.append("Add your occupation (+7 pts)")
+            tips.append("Add your occupation")
         }
         return tips
     }
@@ -624,7 +624,7 @@ struct SettingsMenuSheet: View {
             // Simulated message bubble row
             HStack {
                 Spacer()
-                Text("Venus in Scorpio — I feel you. \u{1F31D}")
+                Text("Venus in Scorpio. I feel you. \u{1F31D}")
                     .font(.system(size: 12))
                     .foregroundColor(isDark ? Color.white : Color(hex: "#1A1525"))
                     .padding(.horizontal, 10)
@@ -663,6 +663,9 @@ struct DiscoverySettingsSheet: View {
     @State private var maxAge: Double = 35
     @State private var showVerifiedOnly = false
     @State private var showActiveOnly  = true
+    @State private var selectedGenders: Set<String> = ["Women", "Men", "Non-binary"]
+
+    private let genderOptions = ["Women", "Men", "Non-binary", "Everyone"]
 
     var body: some View {
         NavigationView {
@@ -670,6 +673,49 @@ struct DiscoverySettingsSheet: View {
                 Color.cosmicDark.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: Spacing.xl) {
+
+                        // Gender preference
+                        settingGroup(title: "SHOW_ME") {
+                            VStack(spacing: 0) {
+                                ForEach(genderOptions, id: \.self) { option in
+                                    Button {
+                                        if option == "Everyone" {
+                                            if selectedGenders.contains("Everyone") {
+                                                selectedGenders = []
+                                            } else {
+                                                selectedGenders = ["Everyone"]
+                                            }
+                                        } else {
+                                            selectedGenders.remove("Everyone")
+                                            if selectedGenders.contains(option) {
+                                                selectedGenders.remove(option)
+                                            } else {
+                                                selectedGenders.insert(option)
+                                            }
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Text(option)
+                                                .font(SynergyFont.body(15))
+                                                .foregroundColor(.cosmicNeutral)
+                                            Spacer()
+                                            if selectedGenders.contains(option) {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.cosmicCyan)
+                                            } else {
+                                                Image(systemName: "circle")
+                                                    .foregroundColor(.cosmicBorder)
+                                            }
+                                        }
+                                        .padding(.vertical, Spacing.sm)
+                                    }
+                                    .buttonStyle(.plain)
+                                    if option != genderOptions.last {
+                                        Divider().overlay(Color.cosmicBorder)
+                                    }
+                                }
+                            }
+                        }
 
                         // Distance
                         settingGroup(title: "MAX_DISTANCE") {

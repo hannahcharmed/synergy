@@ -145,7 +145,8 @@ class CurrentUser: ObservableObject {
         case chartReveal = 2
         case intention = 3
         case profile = 4
-        case notifications = 5
-        case firstMatch = 6
+        case discovery = 5
+        case notifications = 6
+        case firstMatch = 7
     }
 }

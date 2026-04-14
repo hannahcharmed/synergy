@@ -69,7 +69,7 @@ struct CosmicButton: View {
         case .inverted:  return .cosmicDark
         case .outlined:  return .cosmicCyan
         case .ghost:     return .cosmicCyan
-        case .gradient:  return .cosmicNeutral
+        case .gradient:  return .white   // gradient bg is always dark purple→teal
         }
     }
 }
@@ -116,7 +116,7 @@ struct CosmicButtonStyle: ButtonStyle {
         case .inverted:  return .cosmicDark
         case .outlined:  return .cosmicCyan
         case .ghost:     return .cosmicCyan
-        case .gradient:  return .cosmicNeutral
+        case .gradient:  return .white   // gradient bg is always dark; white stays legible in both modes
         }
     }
 
@@ -170,7 +170,7 @@ struct CosmicIconButton: View {
         switch variant {
         case .primary:  return .cosmicNeutral
         case .outlined: return .cosmicCyan
-        case .gradient: return .cosmicNeutral
+        case .gradient: return .white   // gradient bg is always dark
         default:        return .cosmicNeutral
         }
     }

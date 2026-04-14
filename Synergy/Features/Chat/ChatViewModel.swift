@@ -118,7 +118,7 @@ final class ChatViewModel: ObservableObject {
         icebreakerSuggestions = [
             "What does your \(user.birthChart.moonSign.rawValue) moon say about your ideal Sunday?",
             "Your \(user.birthChart.risingSign.rawValue) rising is giving me serious intrigue.",
-            "Venus in \(user.birthChart.venusSign.rawValue) — do you fall fast or slow?",
+            "Venus in \(user.birthChart.venusSign.rawValue). Do you fall fast or slow?",
         ]
     }
 

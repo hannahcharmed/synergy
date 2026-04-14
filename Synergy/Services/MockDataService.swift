@@ -105,7 +105,7 @@ enum MockData {
     static let currentUserId = UUID()
 
     static let transitBoost = SynastryResult.TransitBoost(
-        description: "+7 pts — Venus in Libra (your 7th house)",
+        description: "+7 pts: Venus in Libra (your 7th house)",
         points: 7,
         activeUntil: Calendar.current.date(byAdding: .day, value: 3, to: Date())!
     )
@@ -135,9 +135,9 @@ enum MockData {
 
     static func icebreaker(for user: User) -> String {
         let icebreakers = [
-            "Your Scorpio Venus and their Pisces Moon creates a rare emotional depth connection — ask them about the last thing that genuinely surprised them.",
+            "Your Scorpio Venus and their Pisces Moon creates a rare emotional depth connection. Ask them about the last thing that genuinely surprised them.",
             "With both your Saturns in fire signs, you two likely share a love-hate with ambition. What's your guilty pleasure when you're not being productive?",
-            "Their Gemini rising perfectly balances your Pisces depth — they'd probably say you're the most interesting quiet person they've ever met.",
+            "Their Gemini rising perfectly balances your Pisces depth. They'd probably say you're the most interesting quiet person they've ever met.",
             "Three planets in mutual reception between your charts. That's rare. Start with: what's the most Scorpio thing you've done this week?",
             "Your Venus trine their Jupiter is a joy signature. They'll want to know: what's the best spontaneous thing that's happened to you this year?"
         ]
@@ -151,7 +151,7 @@ enum MockData {
                  city: "London", bio: "Astrology nerd, depth over breadth. Ask me about my 8th house.",
                  vibes: ["Intense", "Loyal", "Witchy"],    distance: 2.4, photoCount: 4,
                  prompts: [
-                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,    answer: "We're not as scary as we seem — just selective."),
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,    answer: "We're not as scary as we seem. Just selective."),
                      ProfilePrompt(question: PromptQuestion.perfectDay.rawValue,        answer: "Full moon, red wine, three hour conversation that fixes everything."),
                      ProfilePrompt(question: PromptQuestion.loveLanguage.rawValue,      answer: "Undivided attention. And probably a heated debate about something."),
                  ], minutesLastActive: 2),
@@ -159,7 +159,7 @@ enum MockData {
                  city: "London", bio: "Marine biologist by day, stargazer by night. Let's talk Jungian archetypes.",
                  vibes: ["Dreamy", "Deep", "Creative"],    distance: 3.1, photoCount: 3,
                  prompts: [
-                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,  answer: "Pisces aren't flaky — we live in seventeen dimensions at once."),
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue,  answer: "Pisces aren't flaky. We live in seventeen dimensions at once."),
                      ProfilePrompt(question: PromptQuestion.moonSign.rawValue,         answer: "…need three days of silence after a dinner party."),
                      ProfilePrompt(question: PromptQuestion.firstDate.rawValue,        answer: "pick somewhere weird. A midnight museum, a harbour, anything with water."),
                  ], minutesLastActive: 45),
@@ -179,17 +179,17 @@ enum MockData {
                      ProfilePrompt(question: PromptQuestion.greenFlag.rawValue,      answer: "I will remember the thing you mentioned once six months ago."),
                  ], minutesLastActive: 600),
         makeUser(name: "Orion", age: 30, sun: .capricorn,  moon: .scorpio,  rising: .aries,
-                 city: "London", bio: "Architect. I build things that outlast me — including relationships.",
+                 city: "London", bio: "Architect. I build things that outlast me, including relationships.",
                  vibes: ["Ambitious", "Steady", "Private"], distance: 4.2, photoCount: 2,
                  prompts: [
                      ProfilePrompt(question: PromptQuestion.loveLanguage.rawValue,    answer: "Quietly solving your problems before you notice they existed."),
                      ProfilePrompt(question: PromptQuestion.dealbreaker.rawValue,     answer: "Small thinking."),
                  ], minutesLastActive: 1200),
         makeUser(name: "Luna",  age: 25, sun: .libra,      moon: .aquarius, rising: .gemini,
-                 city: "London", bio: "Journalist. I write about the spaces between things — relationships, cities.",
+                 city: "London", bio: "Journalist. I write about the spaces between things: relationships, cities.",
                  vibes: ["Witty", "Fair", "Magnetic"],     distance: 2.9, photoCount: 4,
                  prompts: [
-                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue, answer: "Libras don't avoid conflict — we just prefer a nicer word for it."),
+                     ProfilePrompt(question: PromptQuestion.wrongAboutSign.rawValue, answer: "Libras don't avoid conflict. We just prefer a nicer word for it."),
                      ProfilePrompt(question: PromptQuestion.rizz.rawValue,           answer: "I will interview you like a journalist on the first date. It's a compliment."),
                      ProfilePrompt(question: PromptQuestion.firstDate.rawValue,      answer: "A bookshop, obviously. What you pick up first tells me everything."),
                  ], minutesLastActive: 3),
@@ -274,7 +274,7 @@ enum MockData {
             status: .matched,
             createdAt: Date().addingTimeInterval(-172800),
             mutualAt: Date().addingTimeInterval(-86400),
-            aiIcebreaker: "Your Pisces energy and my Scorpio depth — we're basically the entire ocean."
+            aiIcebreaker: "Your Pisces energy and my Scorpio depth. We're basically the entire ocean."
         )
 
         let msgs1 = messages(for: convId1)
@@ -360,13 +360,13 @@ enum MockData {
         userId: currentUserId,
         date: Date(),
         content: """
-        Your Scorpio Sun is entering a period of heightened resonance as Venus moves through Libra — your 12th house of hidden connections. What has been gestating beneath the surface is ready to be seen.
+        Your Scorpio Sun is entering a period of heightened resonance as Venus moves through Libra, your 12th house of hidden connections. What has been gestating beneath the surface is ready to be seen.
 
         Today, your Pisces rising creates a rare window: emotional depth meets social grace. You're magnetic without trying. The matches aligned with you today carry a Venus-Moon harmony that mirrors your own inner architecture.
 
         The north node's current position suggests that the connections you make in the next 72 hours carry unusual staying power. Show up fully. The cosmic frequency is broadcasting at 440Hz.
         """,
-        headline: "Venus enters your hidden house — magnetic energy peaks",
+        headline: "Venus enters your hidden house. Magnetic energy peaks.",
         cosmicWeather: CosmicWeather(
             mood: .electric,
             dominantTransit: "Venus in Libra (12th house)",
@@ -409,6 +409,15 @@ enum MockData {
             ritualPrompt: "What pattern are you releasing in love? Say it out loud under the moon.",
             isActive: false
         ),
+        RitualEvent(
+            id: UUID(), type: .retrograde,
+            title: "Mercury Retrograde in Gemini",
+            description: "Mercury is retrograde. Back up plans, re-read messages before sending, avoid signing contracts. Reconnections from the past are likely.",
+            startDate: Date().addingTimeInterval(-86400 * 3),
+            endDate: Date().addingTimeInterval(86400 * 18),
+            ritualPrompt: "What conversation have you been avoiding? Mercury retrograde is asking you to revisit it.",
+            isActive: true
+        ),
     ]
 }
 
@@ -433,7 +442,7 @@ final class NotificationService {
     func scheduleMatchNotification(matchName: String, cosmicScore: Int) {
         let content = UNMutableNotificationContent()
         content.title = "It's a cosmic match! ✦"
-        content.body = "You and \(matchName) liked each other — \(cosmicScore)% compatibility."
+        content.body = "You and \(matchName) liked each other. \(cosmicScore)% compatibility."
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1.5, repeats: false)
         let req = UNNotificationRequest(identifier: "match-\(UUID().uuidString)", content: content, trigger: trigger)

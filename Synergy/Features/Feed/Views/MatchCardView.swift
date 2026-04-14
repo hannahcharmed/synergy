@@ -17,7 +17,7 @@ struct MatchCardView: View {
     @State private var synastryHintOpacity: Double = 0
     @State private var photoIndex: Int = 0
 
-    private let swipeThreshold: CGFloat = 100
+    private let swipeThreshold: CGFloat = 75
     private let swipeUpThreshold: CGFloat = -80
 
     var body: some View {

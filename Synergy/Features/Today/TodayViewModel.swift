@@ -151,7 +151,7 @@ final class TodayViewModel: ObservableObject {
                 planet: "Venus", planetSymbol: "♀",
                 action: "enters", target: "your 7th House",
                 daysUntil: 0,
-                impactDescription: "Romantic magnetism peaks. Open invitations, direct confessions — this window lasts 18 days.",
+                impactDescription: "Romantic magnetism peaks. Open invitations, direct confessions. This window lasts 18 days.",
                 colorHex: "#FF6B9D"
             ),
             UpcomingTransit(
@@ -191,14 +191,14 @@ final class TodayViewModel: ObservableObject {
         let matches = MockDataService.shared.fetchFeed(limit: 3)
         let days = ["Monday", "Wednesday", "Friday"]
         let insights = [
-            "Venus trines their natal Moon this week — emotional depth is available.",
-            "Mercury aligns with their rising — conversations will flow effortlessly.",
-            "Mars sextiles their Venus — shared momentum and creative spark."
+            "Venus trines their natal Moon this week. Emotional depth is available.",
+            "Mercury aligns with their rising. Conversations will flow effortlessly.",
+            "Mars sextiles their Venus. Shared momentum and creative spark."
         ]
         let transits = [
             "Jupiter entering your 7th house amplifies this connection.",
-            "Full Moon in your 5th house — ideal for playful exchanges.",
-            "Venus retrograde ends — unresolved feelings may surface positively."
+            "Full Moon in your 5th house. Ideal for playful exchanges.",
+            "Venus retrograde ends. Unresolved feelings may surface positively."
         ]
         return matches.enumerated().map { i, item in
             WeeklyReportEntry(

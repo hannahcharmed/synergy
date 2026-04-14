@@ -61,7 +61,7 @@ struct IntentionView: View {
                 .foregroundColor(.cosmicNeutral)
                 .lineSpacing(2)
 
-            Text("Not 'what are you looking for' — but what energy\ndo you want to invite into your life?")
+            Text("Not 'what are you looking for' but what energy\ndo you want to invite into your life?")
                 .font(SynergyFont.body(14))
                 .foregroundColor(.cosmicMuted)
                 .lineSpacing(3)

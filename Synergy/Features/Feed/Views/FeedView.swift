@@ -24,7 +24,7 @@ struct FeedView: View {
                     } else {
                         cardDeck
                         actionButtons
-                            .padding(.bottom, 100)
+                            .padding(.bottom, 24)
                     }
                 }
             }
@@ -383,10 +383,10 @@ struct SynastryDetailSheet: View {
                 .systemLabel()
 
             let aspects: [(String, String, Bool)] = [
-                ("Venus △ Venus",   "Trine — deep romantic harmony", true),
-                ("☽ Moon ☌ Moon",  "Conjunction — emotional resonance", true),
-                ("☉ Sun ⚹ ☽ Moon", "Sextile — natural understanding", true),
-                ("♂ Mars □ ♄ Saturn", "Square — productive tension", false),
+                ("Venus △ Venus",   "Trine: deep romantic harmony", true),
+                ("☽ Moon ☌ Moon",  "Conjunction: emotional resonance", true),
+                ("☉ Sun ⚹ ☽ Moon", "Sextile: natural understanding", true),
+                ("♂ Mars □ ♄ Saturn", "Square: productive tension", false),
             ]
 
             ForEach(aspects, id: \.0) { name, desc, positive in

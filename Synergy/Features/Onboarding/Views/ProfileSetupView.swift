@@ -16,10 +16,33 @@ import PhotosUI
 struct ProfileSetupView: View {
     @EnvironmentObject var vm: OnboardingViewModel
     @State private var showPhotoPicker = false
+    @State private var promptDraft: [String] = ["", "", ""]
+    @State private var promptQuestions: [PromptQuestion] = [.wrongAboutSign, .perfectDay, .loveLanguage]
+    @State private var activePromptSlots: Int = 1
 
     private var signPrompt: String {
         guard let chart = vm.computedChart else { return "What do people always get wrong about you?" }
         return "What do people always get wrong about your \(chart.sunSign.rawValue)?"
+    }
+
+    private var vibeChipSuggestions: [String] {
+        guard let chart = vm.computedChart else {
+            return ["Intense", "Curious", "Dreamy", "Grounded", "Electric", "Magnetic"]
+        }
+        switch chart.sunSign {
+        case .aries:       return ["Bold", "Passionate", "Direct", "Fearless", "Fiery"]
+        case .taurus:      return ["Grounded", "Sensual", "Steady", "Loyal", "Patient"]
+        case .gemini:      return ["Witty", "Curious", "Playful", "Electric", "Adaptable"]
+        case .cancer:      return ["Nurturing", "Intuitive", "Empathic", "Deep", "Homey"]
+        case .leo:         return ["Radiant", "Generous", "Dramatic", "Warm", "Creative"]
+        case .virgo:       return ["Analytical", "Precise", "Caring", "Grounded", "Thoughtful"]
+        case .libra:       return ["Charming", "Fair", "Aesthetic", "Witty", "Diplomatic"]
+        case .scorpio:     return ["Intense", "Mysterious", "Loyal", "Magnetic", "Deep"]
+        case .sagittarius: return ["Free", "Adventurous", "Philosophical", "Honest", "Optimistic"]
+        case .capricorn:   return ["Ambitious", "Steady", "Disciplined", "Dry", "Private"]
+        case .aquarius:    return ["Electric", "Visionary", "Quirky", "Detached", "Original"]
+        case .pisces:      return ["Dreamy", "Empathic", "Creative", "Fluid", "Romantic"]
+        }
     }
 
     var body: some View {
@@ -29,6 +52,7 @@ struct ProfileSetupView: View {
                 photoSection
                 bioSection
                 vibeSection
+                promptsSection
                 ctaButton
                     .padding(.bottom, Spacing.xxxl)
             }
@@ -40,6 +64,15 @@ struct ProfileSetupView: View {
                 vm.photos.append(contentsOf: images)
             }
         }
+        .onDisappear { syncPromptsToVM() }
+    }
+
+    private func syncPromptsToVM() {
+        vm.prompts = zip(promptQuestions.prefix(activePromptSlots), promptDraft.prefix(activePromptSlots))
+            .compactMap { q, a in
+                let trimmed = a.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : ProfilePrompt(question: q.rawValue, answer: trimmed)
+            }
     }
 
     // MARK: - Header
@@ -191,12 +224,14 @@ struct ProfileSetupView: View {
                 Text("COSMIC_VIBE")
                     .systemLabel()
                 Spacer()
-                Text("3 words max")
+                Text("\(vm.vibeWords.count) / 3")
                     .systemLabel()
+                    .foregroundColor(vm.vibeWords.count == 3 ? .cosmicCyan : .cosmicMuted)
             }
 
+            // Selected vibe words chips
             if !vm.vibeWords.isEmpty {
-                HStack(spacing: Spacing.sm) {
+                ChipRow(spacing: Spacing.sm) {
                     ForEach(Array(vm.vibeWords.enumerated()), id: \.offset) { i, word in
                         HStack(spacing: 4) {
                             Text(word)
@@ -210,17 +245,48 @@ struct ProfileSetupView: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.cosmicCyan.opacity(0.12))
+                        .background(Color.cosmicCyan.opacity(0.15))
                         .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.4), lineWidth: 1))
+                        .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.5), lineWidth: 1))
                     }
                 }
                 .transition(.scale.combined(with: .opacity))
             }
 
+            // Zodiac-based suggestion chips
+            if vm.vibeWords.count < 3 {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    Text("Suggestions for your sign")
+                        .font(SynergyFont.body(11))
+                        .foregroundColor(.cosmicMuted)
+                    ChipRow(spacing: Spacing.sm) {
+                        ForEach(vibeChipSuggestions.filter { !vm.vibeWords.contains($0) }, id: \.self) { chip in
+                            Button {
+                                if vm.vibeWords.count < 3 {
+                                    withAnimation(.spring(response: 0.3)) {
+                                        vm.vibeWords.append(chip)
+                                    }
+                                }
+                            } label: {
+                                Text(chip)
+                                    .font(SynergyFont.body(13))
+                                    .foregroundColor(.cosmicCyan.opacity(0.9))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.cosmicCyan.opacity(0.06))
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.25), lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+
+            // Custom input
             if vm.vibeWords.count < 3 {
                 HStack {
-                    TextField("e.g. Intense", text: $vm.vibeInput)
+                    TextField("Or type your own...", text: $vm.vibeInput)
                         .font(SynergyFont.body(15))
                         .foregroundColor(.cosmicNeutral)
                         .submitLabel(.done)
@@ -251,6 +317,134 @@ struct ProfileSetupView: View {
         .animation(.spring(response: 0.3), value: vm.vibeWords.count)
     }
 
+    // MARK: - Prompts Section
+
+    private var promptsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Text("YOUR_PROMPTS")
+                    .systemLabel()
+                Spacer()
+                Text("\(activePromptSlots) / 3")
+                    .systemLabel()
+                    .foregroundColor(.cosmicMuted)
+            }
+
+            ForEach(0..<activePromptSlots, id: \.self) { i in
+                promptSlot(index: i)
+            }
+
+            if activePromptSlots < 3 {
+                Button {
+                    withAnimation(.spring(response: 0.35)) {
+                        activePromptSlots += 1
+                    }
+                } label: {
+                    HStack(spacing: Spacing.sm) {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(.cosmicCyan)
+                        Text("Add another prompt")
+                            .font(SynergyFont.body(14))
+                            .foregroundColor(.cosmicCyan)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Spacing.md)
+                    .background(Color.cosmicDarkAlt)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .strokeBorder(Color.cosmicBorder, style: StrokeStyle(lineWidth: 1, dash: [5]))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+
+            Text("Prompts help matches get to know the real you")
+                .font(SynergyFont.body(11))
+                .foregroundColor(.cosmicMuted)
+        }
+    }
+
+    private func promptSlot(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Question picker
+            Menu {
+                ForEach(PromptQuestion.allCases, id: \.self) { q in
+                    Button(q.rawValue) {
+                        promptQuestions[index] = q
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(promptQuestions[index].rawValue)
+                        .font(SynergyFont.body(13, weight: .semibold))
+                        .foregroundColor(.cosmicCyan)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11))
+                        .foregroundColor(.cosmicCyan)
+                }
+            }
+            .buttonStyle(.plain)
+
+            // Answer text editor
+            ZStack(alignment: .topLeading) {
+                if promptDraft[index].isEmpty {
+                    Text("Your answer...")
+                        .font(SynergyFont.body(14))
+                        .foregroundColor(.cosmicMuted.opacity(0.5))
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.top, Spacing.sm)
+                }
+                TextEditor(text: $promptDraft[index])
+                    .font(SynergyFont.body(14))
+                    .foregroundColor(.cosmicNeutral)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.sm)
+                    .frame(minHeight: 80)
+                    .onChange(of: promptDraft[index]) { v in
+                        if v.count > 150 { promptDraft[index] = String(v.prefix(150)) }
+                    }
+            }
+            .background(Color.cosmicDarkAlt)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .strokeBorder(Color.cosmicBorder, lineWidth: 1)
+            )
+
+            HStack {
+                Spacer()
+                Text("\(promptDraft[index].count)/150")
+                    .systemLabel()
+                    .foregroundColor(promptDraft[index].count > 130 ? .cosmicError : .cosmicMuted)
+                if index > 0 {
+                    Button {
+                        withAnimation(.spring(response: 0.3)) {
+                            if index < promptDraft.count { promptDraft[index] = "" }
+                            activePromptSlots -= 1
+                        }
+                    } label: {
+                        Text("Remove")
+                            .font(SynergyFont.body(11))
+                            .foregroundColor(.cosmicError.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(Spacing.md)
+        .background(Color.cosmicCard)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.sm)
+                .strokeBorder(Color.cosmicBorder, lineWidth: 1)
+        )
+    }
+
     // MARK: - CTA
 
     private var ctaButton: some View {
@@ -271,6 +465,26 @@ struct ProfileSetupView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: vm.canAdvanceFromProfile)
+    }
+}
+
+// MARK: - ChipRow (horizontal scrolling chip container, iOS 15 compatible)
+
+struct ChipRow<Content: View>: View {
+    let spacing: CGFloat
+    let content: () -> Content
+
+    init(spacing: CGFloat = 8, @ViewBuilder content: () -> Content) {
+        self.spacing = spacing
+        self.content = content
+    }
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: spacing) {
+                content()
+            }
+        }
     }
 }
 

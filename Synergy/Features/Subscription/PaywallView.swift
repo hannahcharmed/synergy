@@ -116,7 +116,7 @@ struct PaywallView: View {
     private var ctaButton: some View {
         VStack(spacing: Spacing.md) {
             CosmicButton(
-                "Start \(selectedTier.displayName) — \(selectedTier.monthlyPrice)",
+                "Start \(selectedTier.displayName) · \(selectedTier.monthlyPrice)",
                 variant: .gradient
             ) {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
