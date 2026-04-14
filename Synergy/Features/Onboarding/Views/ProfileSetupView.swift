@@ -472,17 +472,17 @@ struct ProfileSetupView: View {
 
 struct ChipRow<Content: View>: View {
     let spacing: CGFloat
-    let content: () -> Content
+    let content: Content
 
     init(spacing: CGFloat = 8, @ViewBuilder content: () -> Content) {
         self.spacing = spacing
-        self.content = content
+        self.content = content()   // call builder immediately; avoids @escaping on non-escaping param
     }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: spacing) {
-                content()
+                content
             }
         }
     }
