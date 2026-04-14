@@ -402,6 +402,15 @@ struct TodayView: View {
 
     private func upcomingTransitCard(_ transit: UpcomingTransit) -> some View {
         let accentColor = Color(hex: transit.colorHex)
+        let glowRadius: CGFloat   = transit.isImminent ? 8 : 0
+        let planetFontSize: CGFloat = transit.isToday ? 20 : 17
+        let badgeLabel: String    = transit.isToday ? "TODAY" : "IN \(transit.daysUntil)D"
+        let badgeTextColor: Color = transit.isToday ? accentColor : .cosmicMuted
+        let badgeBgColor: Color   = transit.isToday ? accentColor.opacity(0.18) : Color.cosmicBorder
+        let borderColor: Color    = transit.isImminent ? accentColor : Color.cosmicBorder
+        let borderWidth: CGFloat  = transit.isImminent ? 1.5 : 1
+        let borderOpacity: Double = transit.isImminent ? 0.5 : 1
+
         return HStack(alignment: .top, spacing: Spacing.md) {
             // Planet symbol circle
             ZStack {
@@ -409,10 +418,10 @@ struct TodayView: View {
                     .fill(accentColor.opacity(0.15))
                     .frame(width: 44, height: 44)
                 Text(transit.planetSymbol)
-                    .font(.system(size: transit.isToday ? 20 : 17))
+                    .font(.system(size: planetFontSize))
                     .foregroundColor(accentColor)
             }
-            .cosmicGlow(color: accentColor, radius: transit.isImminent ? 8 : 0)
+            .cosmicGlow(color: accentColor, radius: glowRadius)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -422,12 +431,12 @@ struct TodayView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
                     // Day badge
-                    Text(transit.isToday ? "TODAY" : "IN \(transit.daysUntil)D")
+                    Text(badgeLabel)
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundColor(transit.isToday ? accentColor : .cosmicMuted)
+                        .foregroundColor(badgeTextColor)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
-                        .background((transit.isToday ? accentColor : Color.cosmicBorder).opacity(transit.isToday ? 0.18 : 1))
+                        .background(badgeBgColor)
                         .clipShape(Capsule())
                 }
                 Text(transit.impactDescription)
@@ -442,11 +451,8 @@ struct TodayView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.card)
-                .strokeBorder(
-                    transit.isImminent ? accentColor : Color.cosmicBorder,
-                    lineWidth: transit.isImminent ? 1.5 : 1
-                )
-                .opacity(transit.isImminent ? 0.5 : 1)
+                .strokeBorder(borderColor, lineWidth: borderWidth)
+                .opacity(borderOpacity)
         )
     }
 
