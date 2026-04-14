@@ -94,7 +94,7 @@ struct NotificationOptInView: View {
 
     private var ctaButtons: some View {
         VStack(spacing: Spacing.md) {
-            CosmicButton("Yes — send my reading", variant: .gradient) {
+            CosmicButton("Yes, send my reading", variant: .gradient) {
                 // requestNotifications calls advance() internally via async
                 vm.requestNotifications()
             }

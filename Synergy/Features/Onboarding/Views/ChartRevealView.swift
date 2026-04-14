@@ -201,7 +201,7 @@ struct ChartRevealView: View {
     }
 
     private func moonDescription(_ chart: BirthChart) -> String {
-        "a \(chart.moonSign.rawValue) Moon — \(chart.moonSign.element.rawValue.lowercased()) emotional depths"
+        "a \(chart.moonSign.rawValue) Moon with \(chart.moonSign.element.rawValue.lowercased()) emotional depths"
     }
 
     // MARK: - Traits Row

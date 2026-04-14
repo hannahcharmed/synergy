@@ -29,11 +29,14 @@ final class OnboardingViewModel: ObservableObject {
     @Published var bio: String = ""
     @Published var vibeWords: [String] = []
     @Published var vibeInput: String = ""
+    @Published var prompts: [ProfilePrompt] = []
 
-    // Step 6 — Notifications
+    // Step 6 — Discovery (preferences)
+
+    // Step 7 — Notifications
     @Published var notificationsGranted = false
 
-    // Step 7 — First Match
+    // Step 8 — First Match
     @Published var firstMatch: FeedItem? = nil
 
     // Validation

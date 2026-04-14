@@ -69,10 +69,10 @@ struct ChatView: View {
     private var statusBar: some View {
         HStack(spacing: Spacing.md) {
             HStack(spacing: 6) {
-                Image(systemName: "checkmark.shield.fill")
+                Image(systemName: "lock.fill")
                     .font(.system(size: 10))
                     .foregroundColor(.cosmicSuccess)
-                Text("TRANSMISSION_SECURE")
+                Text("END-TO-END PRIVATE")
                     .systemLabel()
                     .foregroundColor(.cosmicSuccess.opacity(0.8))
             }
@@ -290,9 +290,9 @@ struct ChatView: View {
                                   ? AnyShapeStyle(Color.cosmicCard)
                                   : AnyShapeStyle(LinearGradient.cosmicGradient))
                             .frame(width: 40, height: 40)
-                        Text("EXECUTE")
+                        Text("SEND")
                             .font(.system(size: 8, weight: .bold, design: .monospaced))
-                            .foregroundColor(vm.messageText.isEmpty ? .cosmicMuted : .cosmicNeutral)
+                            .foregroundColor(vm.messageText.isEmpty ? .cosmicMuted : .white)
                             .kerning(1)
                     }
                 }

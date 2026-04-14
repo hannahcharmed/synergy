@@ -63,11 +63,17 @@ struct TodayView: View {
             streakCard
         }
 
-        if !vm.activeRituals.isEmpty {
-            ritualSection(title: "ACTIVE_RITUALS", events: vm.activeRituals)
-        }
         if !vm.alignedMatches.isEmpty {
             alignedMatchesSection
+        }
+
+        // Weekly synastry report button
+        if !vm.weeklyReport.isEmpty {
+            weeklyReportCard
+        }
+
+        if !vm.activeRituals.isEmpty {
+            ritualSection(title: "ACTIVE_RITUALS", events: vm.activeRituals)
         }
         if !vm.upcomingRituals.isEmpty {
             ritualSection(title: "UPCOMING", events: vm.upcomingRituals)
@@ -76,11 +82,6 @@ struct TodayView: View {
         // Upcoming transit forecast cards
         if !vm.upcomingTransits.isEmpty {
             upcomingTransitsSection
-        }
-
-        // Weekly synastry report button
-        if !vm.weeklyReport.isEmpty {
-            weeklyReportCard
         }
     }
 
@@ -296,7 +297,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("COSMIC_STREAK")
                     .systemLabel()
-                Text("\(vm.streakDays) days in a row — the stars notice your consistency.")
+                Text("\(vm.streakDays) days in a row. The stars notice your consistency.")
                     .font(SynergyFont.body(13))
                     .foregroundColor(.cosmicNeutral.opacity(0.8))
             }
