@@ -667,6 +667,7 @@ struct VoiceNotePlayerView: View {
     @State private var isPlaying = false
     @State private var playProgress: Double = 0
     @State private var timer: Timer? = nil
+    @State private var showTranscript = false
 
     private var accentColor: Color { isFromCurrentUser ? .cosmicNeutral : .cosmicCyan }
     private var bgColor: Color {
@@ -681,38 +682,78 @@ struct VoiceNotePlayerView: View {
     }
 
     var body: some View {
-        HStack(spacing: Spacing.sm) {
-            Button { togglePlayback() } label: {
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(accentColor)
-                    .frame(width: 30, height: 30)
-                    .background(accentColor.opacity(0.2))
-                    .clipShape(Circle())
-            }
-            GeometryReader { geo in
-                HStack(spacing: 2) {
-                    ForEach(0..<barHeights.count, id: \.self) { i in
-                        let played = Double(i) / Double(barHeights.count) <= playProgress
-                        Capsule()
-                            .fill(accentColor)
-                            .opacity(played ? 1.0 : 0.3)
-                            .frame(width: 3, height: geo.size.height * barHeights[i])
-                    }
+        VStack(alignment: .leading, spacing: 6) {
+            // Waveform player row
+            HStack(spacing: Spacing.sm) {
+                Button { togglePlayback() } label: {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(accentColor)
+                        .frame(width: 30, height: 30)
+                        .background(accentColor.opacity(0.2))
+                        .clipShape(Circle())
                 }
-                .frame(maxHeight: .infinity, alignment: .center)
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(0..<barHeights.count, id: \.self) { i in
+                            let played = Double(i) / Double(barHeights.count) <= playProgress
+                            Capsule()
+                                .fill(accentColor)
+                                .opacity(played ? 1.0 : 0.3)
+                                .frame(width: 3, height: geo.size.height * barHeights[i])
+                        }
+                    }
+                    .frame(maxHeight: .infinity, alignment: .center)
+                }
+                .frame(height: 28)
+                Text(timeLabel)
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundColor(accentColor.opacity(0.8))
+                    .frame(width: 32)
             }
-            .frame(height: 28)
-            Text(timeLabel)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(accentColor.opacity(0.8))
-                .frame(width: 32)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, 10)
+            .background(bgColor)
+            .clipShape(Capsule())
+
+            // Transcript (shown after playback completes)
+            if showTranscript {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "text.quote")
+                            .font(.system(size: 9))
+                        Text("TRANSCRIPT")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .kerning(0.8)
+                    }
+                    .foregroundColor(accentColor.opacity(0.5))
+
+                    Text(mockTranscript)
+                        .font(SynergyFont.body(12))
+                        .foregroundColor(.cosmicNeutral.opacity(0.8))
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, 8)
+                .background(bgColor.opacity(0.55))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, 10)
-        .background(bgColor)
-        .clipShape(Capsule())
+        .animation(.easeIn(duration: 0.25), value: showTranscript)
         .onDisappear { stopPlayback() }
+    }
+
+    private var mockTranscript: String {
+        let pool = [
+            "Did you check the synastry chart? Saturn is doing something wild right now in your 7th.",
+            "I've been thinking about what you said about your moon sign — honestly it makes so much sense.",
+            "The full moon ritual last week, I'll tell you everything. It was intense. Call me.",
+            "Have you noticed how the energy shifts when Venus goes retrograde? I felt it immediately.",
+            "Okay so my Scorpio rising has been fully activated this week. Just wanted you to know.",
+        ]
+        return pool[Int(duration * 3) % pool.count]
     }
 
     private func togglePlayback() { isPlaying ? stopPlayback() : startPlayback() }
@@ -733,6 +774,9 @@ struct VoiceNotePlayerView: View {
     private func stopPlayback() {
         isPlaying = false
         timer?.invalidate(); timer = nil
+        if playProgress >= 0.95 {
+            withAnimation(.easeIn(duration: 0.3)) { showTranscript = true }
+        }
     }
 }
 

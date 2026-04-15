@@ -78,6 +78,17 @@ struct MainTabView: View {
                 feedVM.pendingIcebreakerText = nil
             }
         }
+        // Deep-link from notifications: navigate to the requested tab
+        .onReceive(NotificationCenter.default.publisher(for: .synergyNavigateToTab)) { note in
+            guard let destination = note.userInfo?["tab"] as? String else { return }
+            let target: Tab = destination == "today" ? .today
+                           : destination == "chat"   ? .chat
+                           : destination == "profile" ? .profile
+                           : .feed
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                selectedTab = target
+            }
+        }
     }
 }
 

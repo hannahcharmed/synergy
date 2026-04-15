@@ -42,11 +42,11 @@ final class ProfileViewModel: ObservableObject {
         )
     }
 
-    func saveProfile(bio: String, vibeWords: [String], prompts: [ProfilePrompt]) {
+    func saveProfile(bio: String, vibeWords: [String], prompts: [ProfilePrompt], photos: [String]? = nil) {
         guard let u = user else { return }
         let cleanBio = bio.trimmingCharacters(in: .whitespacesAndNewlines)
         let newProfile = UserProfile(
-            photos: u.profile.photos,
+            photos: photos ?? u.profile.photos,
             bio: cleanBio.isEmpty ? nil : cleanBio,
             intentionTags: u.profile.intentionTags,
             vibeWords: vibeWords.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },

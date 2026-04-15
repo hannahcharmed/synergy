@@ -468,4 +468,63 @@ final class NotificationService {
         let req = UNNotificationRequest(identifier: "transit-\(UUID().uuidString)", content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(req)
     }
+
+    /// Schedules the daily cosmic reading notification.
+    /// The `userInfo` payload carries `"destination": "today"` so tapping
+    /// the notification deep-links directly into the Today tab.
+    func scheduleDailyReadingNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Your daily cosmic reading ✦"
+        content.body = "Your stars have aligned. Open Synergy to see today's reading."
+        content.sound = .default
+        content.userInfo = ["destination": "today"]
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2.0, repeats: false)
+        let req = UNNotificationRequest(
+            identifier: "daily-reading-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(req)
+    }
+}
+
+// MARK: - Notification.Name extension
+
+extension Notification.Name {
+    /// Posted (via NotificationCenter.default) when the user taps a push
+    /// notification that carries a `"destination"` key in its userInfo.
+    static let synergyNavigateToTab = Notification.Name("synergy.navigateToTab")
+}
+
+// MARK: - UNUserNotificationCenterDelegate
+
+/// Handles foreground presentation and user-tap responses for all Synergy
+/// notifications. Hold a strong reference to this in AppCoordinator.
+final class SynergyNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+
+    /// Show banner + play sound even when the app is in the foreground.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler handler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        handler([.banner, .sound])
+    }
+
+    /// Translate a notification tap into an in-app navigation event.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler handler: @escaping () -> Void
+    ) {
+        let info = response.notification.request.content.userInfo
+        if let destination = info["destination"] as? String {
+            NotificationCenter.default.post(
+                name: .synergyNavigateToTab,
+                object: nil,
+                userInfo: ["tab": destination]
+            )
+        }
+        handler()
+    }
 }

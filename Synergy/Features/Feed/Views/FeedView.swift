@@ -343,10 +343,11 @@ struct SynastryDetailSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Spacing.xl) {
                         scoreHeader
+                        compositeWheelSection
                         radarSection
                         layersSection
                         relationshipDomainsSection
-                        aspectsSection
+                        aspectGridSection
                         icebreakerSection
                     }
                     .padding(Spacing.xl)
@@ -592,37 +593,143 @@ struct SynastryDetailSheet: View {
         }
     }
 
-    private var aspectsSection: some View {
+    // MARK: - Current user positions (Scorpio Sun / Pisces Moon, mirrors MockDataService)
+
+    private var currentUserPositions: [PlanetaryPosition] {
+        [
+            PlanetaryPosition(planet: .sun,     sign: .scorpio,     degree: 222.4, houseNumber: 1,  isRetrograde: false),
+            PlanetaryPosition(planet: .moon,    sign: .pisces,      degree: 348.1, houseNumber: 4,  isRetrograde: false),
+            PlanetaryPosition(planet: .mercury, sign: .scorpio,     degree: 210.7, houseNumber: 1,  isRetrograde: false),
+            PlanetaryPosition(planet: .venus,   sign: .sagittarius, degree: 256.3, houseNumber: 2,  isRetrograde: false),
+            PlanetaryPosition(planet: .mars,    sign: .capricorn,   degree: 295.8, houseNumber: 3,  isRetrograde: false),
+        ]
+    }
+
+    // MARK: - Composite Wheel Section
+
+    private var compositeWheelSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            Text("KEY_ASPECTS")
+            Text("COMPOSITE_WHEEL")
                 .systemLabel()
 
-            let aspects: [(String, String, Bool)] = [
-                ("Venus △ Venus",   "Trine: deep romantic harmony", true),
-                ("☽ Moon ☌ Moon",  "Conjunction: emotional resonance", true),
-                ("☉ Sun ⚹ ☽ Moon", "Sextile: natural understanding", true),
-                ("♂ Mars □ ♄ Saturn", "Square: productive tension", false),
-            ]
+            HStack(spacing: Spacing.lg) {
+                legendPill(color: .cosmicCyan, label: "You")
+                legendPill(color: Color(hex: "#FF6B9D"), label: item.user.displayName)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    legendPill(color: .cosmicSuccess, label: "Harmonious")
+                    legendPill(color: .cosmicError,   label: "Challenging")
+                }
+            }
 
-            ForEach(aspects, id: \.0) { name, desc, positive in
-                HStack(spacing: Spacing.md) {
-                    Circle()
-                        .fill(positive ? Color.cosmicSuccess : Color.cosmicError)
-                        .frame(width: 8, height: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(name)
-                            .font(SynergyFont.body(14, weight: .medium))
-                            .foregroundColor(.cosmicNeutral)
-                        Text(desc)
-                            .font(SynergyFont.body(12))
-                            .foregroundColor(.cosmicMuted)
+            HStack {
+                Spacer()
+                SynastryCompositeWheelView(
+                    userPositions: currentUserPositions,
+                    matchPositions: item.user.birthChart.positions
+                )
+                Spacer()
+            }
+            .padding(.vertical, Spacing.sm)
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+    }
+
+    private func legendPill(color: Color, label: String) -> some View {
+        HStack(spacing: 5) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text(label)
+                .font(SynergyFont.body(11))
+                .foregroundColor(.cosmicMuted)
+        }
+    }
+
+    // MARK: - Aspect Grid Section
+
+    private var aspectGridSection: some View {
+        let gridPlanets: [Planet] = [.sun, .moon, .venus, .mars]
+        let userPos  = currentUserPositions
+        let matchPos = item.user.birthChart.positions
+
+        return VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("ASPECT_GRID")
+                .systemLabel()
+
+            HStack(spacing: 3) {
+                Text("You ↓")
+                    .font(SynergyFont.body(11, weight: .medium))
+                    .foregroundColor(.cosmicCyan)
+                Text("·")
+                    .font(SynergyFont.body(11))
+                    .foregroundColor(.cosmicMuted)
+                Text("\(item.user.displayName) →")
+                    .font(SynergyFont.body(11, weight: .medium))
+                    .foregroundColor(Color(hex: "#FF6B9D"))
+            }
+
+            // Header row
+            HStack(spacing: 0) {
+                Color.clear.frame(width: 34, height: 30)
+                ForEach(gridPlanets, id: \.self) { p in
+                    Text(p.symbol)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#FF6B9D").opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            Divider().overlay(Color.cosmicBorder.opacity(0.6))
+
+            ForEach(Array(gridPlanets.enumerated()), id: \.element) { rowIdx, uPlanet in
+                let uDeg = userPos.first(where: { $0.planet == uPlanet })?.degree ?? 0
+                HStack(spacing: 0) {
+                    Text(uPlanet.symbol)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.cosmicCyan.opacity(0.85))
+                        .frame(width: 34)
+
+                    ForEach(gridPlanets, id: \.self) { mPlanet in
+                        let mDeg = matchPos.first(where: { $0.planet == mPlanet })?.degree ?? 0
+                        aspectGridCell(aspect: synastryAspect(degA: uDeg, degB: mDeg))
+                            .frame(maxWidth: .infinity)
                     }
-                    Spacer()
+                }
+                if rowIdx < gridPlanets.count - 1 {
+                    Divider().overlay(Color.cosmicBorder.opacity(0.25))
                 }
             }
         }
         .padding(Spacing.lg)
         .cosmicCard()
+    }
+
+    private func aspectGridCell(aspect: AspectType?) -> some View {
+        VStack(spacing: 1) {
+            if let asp = aspect {
+                Text(asp.symbol)
+                    .font(.system(size: 16))
+                    .foregroundColor(asp.isHarmonious ? .cosmicSuccess : .cosmicError)
+                Text(String(asp.rawValue.prefix(3)).uppercased())
+                    .font(.system(size: 7, weight: .medium, design: .monospaced))
+                    .foregroundColor((asp.isHarmonious ? Color.cosmicSuccess : Color.cosmicError).opacity(0.65))
+            } else {
+                Text("—")
+                    .font(.system(size: 14))
+                    .foregroundColor(.cosmicBorder)
+                    .padding(.bottom, 10)
+            }
+        }
+        .frame(height: 44)
+        .background(aspectCellBackground(aspect: aspect))
+    }
+
+    @ViewBuilder
+    private func aspectCellBackground(aspect: AspectType?) -> some View {
+        if let asp = aspect {
+            RoundedRectangle(cornerRadius: 4)
+                .fill((asp.isHarmonious ? Color.cosmicSuccess : Color.cosmicError).opacity(0.07))
+        }
     }
 
     private var icebreakerSection: some View {
@@ -770,4 +877,171 @@ private struct RadarPolygonShape: Shape {
         path.closeSubpath()
         return path
     }
+}
+
+// MARK: - Synastry Composite Wheel
+
+private struct SynastryCompositeWheelView: View {
+    let userPositions: [PlanetaryPosition]
+    let matchPositions: [PlanetaryPosition]
+
+    private let size: CGFloat    = 240
+    private let outerR: CGFloat  = 108   // outer zodiac ring edge
+    private let innerR: CGFloat  = 86    // inner zodiac ring edge
+    private let matchDotR: CGFloat = 73  // match planet orbit
+    private let userDotR: CGFloat  = 55  // current-user planet orbit
+
+    private let zodiacGlyphs = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"]
+    private let personalPlanets: [Planet] = [.sun, .moon, .venus, .mars, .mercury, .ascendant]
+
+    private var half: CGFloat { size / 2 }
+
+    var body: some View {
+        ZStack {
+            // Background
+            Circle()
+                .fill(Color.cosmicDarkAlt)
+                .frame(width: size, height: size)
+
+            // Ring geometry (Canvas — no layout overhead)
+            wheelRingCanvas
+
+            // Zodiac glyphs
+            ForEach(0..<12, id: \.self) { i in
+                let a = segMidAngle(i)
+                let r = (outerR + innerR) / 2
+                Text(zodiacGlyphs[i])
+                    .font(.system(size: 9))
+                    .foregroundColor(.cosmicMuted.opacity(0.7))
+                    .position(x: half + r * cos(a), y: half + r * sin(a))
+            }
+
+            // Aspect lines
+            aspectLinesCanvas
+
+            // Orbit separator
+            Circle()
+                .stroke(Color.cosmicBorder.opacity(0.2), lineWidth: 1)
+                .frame(width: (userDotR + matchDotR), height: (userDotR + matchDotR))
+
+            // Match planets (outer orbit — pink)
+            ForEach(matchPositions.filter { personalPlanets.contains($0.planet) }) { pos in
+                planetDot(pos: pos, color: Color(hex: "#FF6B9D"), radius: matchDotR)
+            }
+
+            // User planets (inner orbit — cyan)
+            ForEach(userPositions.filter { personalPlanets.contains($0.planet) }) { pos in
+                planetDot(pos: pos, color: .cosmicCyan, radius: userDotR)
+            }
+
+            // Centre glyph
+            Circle()
+                .fill(Color.cosmicDark)
+                .frame(width: 30, height: 30)
+            Text("✦")
+                .font(.system(size: 11))
+                .foregroundStyle(LinearGradient.cosmicGradient)
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(Color.cosmicBorder.opacity(0.35), lineWidth: 1))
+    }
+
+    // Angle helpers (0° ecliptic → top of wheel, clockwise)
+    private func degToAngle(_ deg: Double) -> CGFloat {
+        CGFloat((deg / 360.0 - 0.25) * 2.0 * .pi)
+    }
+    private func segStartAngle(_ i: Int) -> CGFloat {
+        CGFloat((Double(i) / 12.0 - 0.25) * 2.0 * .pi)
+    }
+    private func segMidAngle(_ i: Int) -> CGFloat {
+        CGFloat((Double(i) / 12.0 + 1.0 / 24.0 - 0.25) * 2.0 * .pi)
+    }
+
+    // Zodiac ring + segment lines via Canvas
+    private var wheelRingCanvas: some View {
+        let outerR = self.outerR, innerR = self.innerR, half = self.half
+        return Canvas { ctx, sz in
+            let cx = sz.width / 2, cy = sz.height / 2
+
+            // Outer ring stroke
+            ctx.stroke(
+                Path(ellipseIn: CGRect(x: cx - outerR, y: cy - outerR, width: outerR * 2, height: outerR * 2)),
+                with: .color(Color.cosmicBorder.opacity(0.3)), lineWidth: 1
+            )
+            // Inner ring stroke
+            ctx.stroke(
+                Path(ellipseIn: CGRect(x: cx - innerR, y: cy - innerR, width: innerR * 2, height: innerR * 2)),
+                with: .color(Color.cosmicBorder.opacity(0.25)), lineWidth: 1
+            )
+            // 12 segment dividers
+            for i in 0..<12 {
+                let a = Double((Double(i) / 12.0 - 0.25) * 2.0 * .pi)
+                var p = Path()
+                p.move(to: CGPoint(x: cx + innerR * CGFloat(cos(a)), y: cy + innerR * CGFloat(sin(a))))
+                p.addLine(to: CGPoint(x: cx + outerR * CGFloat(cos(a)), y: cy + outerR * CGFloat(sin(a))))
+                ctx.stroke(p, with: .color(Color.cosmicBorder.opacity(0.3)), lineWidth: 0.5)
+            }
+            // Degree tick marks (every 30° on outer edge)
+            for i in 0..<12 {
+                let a = Double((Double(i) / 12.0 - 0.25) * 2.0 * .pi)
+                var tick = Path()
+                tick.move(to: CGPoint(x: cx + outerR * CGFloat(cos(a)), y: cy + outerR * CGFloat(sin(a))))
+                tick.addLine(to: CGPoint(x: cx + (outerR + 4) * CGFloat(cos(a)), y: cy + (outerR + 4) * CGFloat(sin(a))))
+                ctx.stroke(tick, with: .color(Color.cosmicBorder.opacity(0.4)), lineWidth: 1)
+            }
+            _ = half // suppress capture warning
+        }
+        .frame(width: size, height: size)
+    }
+
+    // Aspect lines between both charts
+    private var aspectLinesCanvas: some View {
+        let uFiltered = userPositions.filter  { personalPlanets.contains($0.planet) }
+        let mFiltered = matchPositions.filter { personalPlanets.contains($0.planet) }
+        let cx = half, cy = half
+        let uR = userDotR, mR = matchDotR
+        return Canvas { ctx, _ in
+            for u in uFiltered {
+                for m in mFiltered {
+                    guard let asp = synastryAspect(degA: u.degree, degB: m.degree) else { continue }
+                    let ua = CGFloat((u.degree / 360.0 - 0.25) * 2.0 * .pi)
+                    let ma = CGFloat((m.degree / 360.0 - 0.25) * 2.0 * .pi)
+                    let uPt = CGPoint(x: cx + uR * cos(ua), y: cy + uR * sin(ua))
+                    let mPt = CGPoint(x: cx + mR * cos(ma), y: cy + mR * sin(ma))
+                    var path = Path(); path.move(to: uPt); path.addLine(to: mPt)
+                    let c: Color = asp.isHarmonious ? .cosmicSuccess : .cosmicError
+                    ctx.stroke(path, with: .color(c.opacity(0.28)), lineWidth: 1)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+    }
+
+    private func planetDot(pos: PlanetaryPosition, color: Color, radius: CGFloat) -> some View {
+        let a = degToAngle(pos.degree)
+        let x = half + radius * cos(a)
+        let y = half + radius * sin(a)
+        return ZStack {
+            Circle()
+                .fill(color)
+                .frame(width: 17, height: 17)
+                .shadow(color: color.opacity(0.6), radius: 3)
+            Text(pos.planet.symbol)
+                .font(.system(size: 7, weight: .bold))
+                .foregroundColor(.cosmicDark)
+        }
+        .position(x: x, y: y)
+    }
+}
+
+// MARK: - Aspect computation (file-private helper)
+
+private func synastryAspect(degA: Double, degB: Double) -> AspectType? {
+    var diff = abs(degA - degB).truncatingRemainder(dividingBy: 360)
+    if diff > 180 { diff = 360 - diff }
+    for type: AspectType in [.conjunction, .opposition, .trine, .square, .sextile, .quincunx] {
+        if abs(diff - type.angle) <= type.orb { return type }
+    }
+    return nil
 }
