@@ -126,11 +126,11 @@ struct CosmicDateField: View {
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
-                .colorScheme(.dark)
                 .accentColor(.cosmicCyan)
                 .padding(Spacing.sm)
                 .background(Color.cosmicCard)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .environment(\.colorScheme, .dark)
                 .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
         }
@@ -173,7 +173,6 @@ struct CosmicTimeField: View {
                 displayedComponents: .hourAndMinute
             )
             .datePickerStyle(.compact)
-            .colorScheme(.dark)
             .accentColor(.cosmicCyan)
             .labelsHidden()
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -185,6 +184,7 @@ struct CosmicTimeField: View {
                 RoundedRectangle(cornerRadius: Radius.sm)
                     .strokeBorder(Color.cosmicBorder, lineWidth: 1)
             )
+            .environment(\.colorScheme, .dark)
         }
     }
 }

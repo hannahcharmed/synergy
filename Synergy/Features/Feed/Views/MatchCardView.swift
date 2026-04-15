@@ -327,12 +327,12 @@ struct MatchCardView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(prompt.question.uppercased())
                 .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .foregroundColor(.cosmicMuted)
+                .foregroundColor(Color.white.opacity(0.5))
                 .kerning(0.5)
                 .lineLimit(1)
             Text("\u{201C}\(prompt.answer)\u{201D}")
                 .font(SynergyFont.body(13))
-                .foregroundColor(.cosmicNeutral)
+                .foregroundColor(.white)
                 .lineLimit(2)
                 .lineSpacing(2)
         }

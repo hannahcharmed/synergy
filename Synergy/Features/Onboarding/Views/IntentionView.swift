@@ -52,7 +52,7 @@ struct IntentionView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("SEQUENCE // 04")
+            Text("03 / 07")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan.opacity(0.8))
 

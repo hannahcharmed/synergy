@@ -34,6 +34,13 @@ final class ChatViewModel: ObservableObject {
         activeConversation = conv
         markRead(conv)
         loadIcebreakerSuggestions(for: conv)
+        // Auto-show after 5s if the user hasn't typed anything
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self, self.messageText.isEmpty else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                self.showIcebreakerSuggestions = true
+            }
+        }
     }
 
     func markRead(_ conv: Conversation) {
