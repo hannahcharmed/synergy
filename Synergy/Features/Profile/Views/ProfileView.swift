@@ -664,6 +664,7 @@ struct DiscoverySettingsSheet: View {
     @State private var showVerifiedOnly = false
     @State private var showActiveOnly  = true
     @State private var selectedGenders: Set<String> = ["Women", "Men", "Non-binary"]
+    @AppStorage("minCosmicScore") private var minCosmicScore: Double = 60
 
     private let genderOptions = ["Women", "Men", "Non-binary", "Everyone"]
 
@@ -757,6 +758,36 @@ struct DiscoverySettingsSheet: View {
                             }
                         }
 
+                        // Cosmic score threshold
+                        settingGroup(title: "COSMIC_COMPATIBILITY") {
+                            VStack(alignment: .leading, spacing: Spacing.md) {
+                                HStack {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "sparkles")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.cosmicCyan)
+                                        Text("Minimum match score")
+                                            .font(SynergyFont.body(15))
+                                            .foregroundColor(.cosmicNeutral)
+                                    }
+                                    Spacer()
+                                    Text("\(Int(minCosmicScore))%+")
+                                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                        .foregroundColor(scoreColor(Int(minCosmicScore)))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(scoreColor(Int(minCosmicScore)).opacity(0.12))
+                                        .clipShape(Capsule())
+                                }
+                                Slider(value: $minCosmicScore, in: 0...95, step: 5)
+                                    .tint(.cosmicCyan)
+                                Text(scoreDescription(Int(minCosmicScore)))
+                                    .font(SynergyFont.body(12))
+                                    .foregroundColor(.cosmicMuted)
+                                    .lineSpacing(2)
+                            }
+                        }
+
                         // Toggles
                         settingGroup(title: "FILTERS") {
                             VStack(spacing: 0) {
@@ -780,6 +811,24 @@ struct DiscoverySettingsSheet: View {
             }
         }
         .navigationViewStyle(.stack)
+    }
+
+    private func scoreColor(_ score: Int) -> Color {
+        switch score {
+        case 80...: return .cosmicCyan
+        case 60..<80: return .cosmicPurple
+        default: return .cosmicMuted
+        }
+    }
+
+    private func scoreDescription(_ score: Int) -> String {
+        switch score {
+        case 0..<30:  return "Show everyone — no cosmic filter applied."
+        case 30..<60: return "Light filter — most profiles will appear."
+        case 60..<80: return "Balanced — only meaningful astrological alignment."
+        case 80..<90: return "High bar — strong synastry matches only."
+        default:      return "Strict — only rare, highly aligned connections."
+        }
     }
 
     private func settingGroup<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {

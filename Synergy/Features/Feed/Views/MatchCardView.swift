@@ -324,7 +324,8 @@ struct MatchCardView: View {
     }
 
     private func promptRow(_ prompt: ProfilePrompt) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let isTruncated = prompt.answer.count > 80
+        return VStack(alignment: .leading, spacing: 4) {
             Text(prompt.question.uppercased())
                 .font(.system(size: 9, weight: .bold, design: .monospaced))
                 .foregroundColor(Color.white.opacity(0.5))
@@ -335,6 +336,12 @@ struct MatchCardView: View {
                 .foregroundColor(.white)
                 .lineLimit(2)
                 .lineSpacing(2)
+            if isTruncated {
+                Text("read more")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(Color.white.opacity(0.45))
+                    .kerning(0.5)
+            }
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, 10)

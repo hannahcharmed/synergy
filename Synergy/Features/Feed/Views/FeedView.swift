@@ -199,36 +199,60 @@ struct MatchAlertOverlay: View {
 
     @State private var scale: CGFloat = 0.7
     @State private var opacity: Double = 0
+    @State private var confettiActive = false
+    @State private var scoreBadgeVisible = false
+    @State private var avatarScale: CGFloat = 0.6
+    @State private var avatarOpacity: Double = 0
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.7).ignoresSafeArea()
+            Color.black.opacity(0.75).ignoresSafeArea()
                 .onTapGesture { onDismiss() }
 
             VStack(spacing: Spacing.xl) {
-                // Glow orb
+                // Avatars with score badge
                 ZStack {
-                    Circle()
-                        .fill(LinearGradient.cosmicGradient)
-                        .frame(width: 100, height: 100)
-                        .blur(radius: 20)
-                    Text("✦")
-                        .font(.system(size: 48))
-                        .foregroundColor(.cosmicNeutral)
+                    // Two avatar circles overlapping
+                    HStack(spacing: -20) {
+                        avatarCircle("Y", gradient: LinearGradient.cosmicGradient)
+                        avatarCircle(String(item.user.displayName.prefix(1)),
+                                     gradient: LinearGradient(colors: [.cosmicPurple, .cosmicCyan],
+                                                              startPoint: .topLeading, endPoint: .bottomTrailing))
+                    }
+                    .scaleEffect(avatarScale)
+                    .opacity(avatarOpacity)
+
+                    // Score badge floating above
+                    MatchScoreBadge(score: item.cosmicScore, size: .medium)
+                        .offset(y: -52)
+                        .opacity(scoreBadgeVisible ? 1 : 0)
+                        .scaleEffect(scoreBadgeVisible ? 1 : 0.5)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(0.35), value: scoreBadgeVisible)
                 }
+                .frame(height: 110)
 
                 VStack(spacing: Spacing.sm) {
                     Text("It's a cosmic match!")
-                        .font(SynergyFont.headline(28))
+                        .font(SynergyFont.headline(26))
                         .foregroundColor(.cosmicNeutral)
+                        .multilineTextAlignment(.center)
                     Text("You and \(item.user.displayName) liked each other")
                         .font(SynergyFont.body(15))
                         .foregroundColor(.cosmicMuted)
-                    MatchScorePill(score: item.cosmicScore)
+                        .multilineTextAlignment(.center)
+
+                    if !item.highlights.isEmpty {
+                        HStack(spacing: Spacing.sm) {
+                            ForEach(item.highlights.prefix(2), id: \.self) { h in
+                                PlanetAspectTag(text: h, highlighted: true)
+                            }
+                        }
+                        .padding(.top, 2)
+                    }
                 }
 
                 VStack(spacing: Spacing.sm) {
-                    CosmicButton("Send icebreaker", variant: .gradient) {
+                    CosmicButton("Send icebreaker →", variant: .gradient) {
                         onSendIcebreaker?(item.aiIcebreaker)
                     }
                     Button("Keep exploring") { onDismiss() }
@@ -247,12 +271,42 @@ struct MatchAlertOverlay: View {
             .padding(.horizontal, Spacing.xl)
             .scaleEffect(scale)
             .opacity(opacity)
-            .cosmicPurpleGlow(radius: 24)
+            .cosmicPurpleGlow(radius: 30)
+
+            // Confetti on top
+            if confettiActive {
+                ConfettiView()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
         }
         .onAppear {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 scale = 1.0; opacity = 1.0
             }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.65).delay(0.1)) {
+                avatarScale = 1.0; avatarOpacity = 1.0
+            }
+            scoreBadgeVisible = true
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                confettiActive = true
+            }
+        }
+    }
+
+    private func avatarCircle(_ initial: String, gradient: LinearGradient) -> some View {
+        ZStack {
+            Circle()
+                .fill(gradient)
+                .frame(width: 72, height: 72)
+                .overlay(Circle().strokeBorder(Color.cosmicDark, lineWidth: 3))
+                .cosmicPurpleGlow(radius: 12)
+            Text(initial)
+                .font(SynergyFont.headline(28))
+                .foregroundColor(.cosmicDark)
         }
     }
 }
@@ -291,10 +345,12 @@ struct SynastryDetailSheet: View {
                         scoreHeader
                         radarSection
                         layersSection
+                        relationshipDomainsSection
                         aspectsSection
                         icebreakerSection
                     }
                     .padding(Spacing.xl)
+                    .padding(.bottom, Spacing.xxxl)
                 }
             }
         }
@@ -382,6 +438,157 @@ struct SynastryDetailSheet: View {
                 .frame(height: 4)
             }
             .frame(height: 4)
+        }
+    }
+
+    // MARK: - Relationship Domains
+
+    private var relationshipDomainsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("RELATIONSHIP_DYNAMICS")
+                .systemLabel()
+
+            ForEach(relationshipDomains, id: \.title) { domain in
+                domainCard(domain)
+            }
+        }
+    }
+
+    private struct RelationshipDomain {
+        let title: String
+        let icon: String
+        let color: Color
+        let score: Int
+        let summary: String
+        let detail: String
+    }
+
+    private var relationshipDomains: [RelationshipDomain] {
+        let s = item.cosmicScore
+        return [
+            RelationshipDomain(
+                title: "Communication",
+                icon: "bubble.left.and.bubble.right.fill",
+                color: .cosmicCyan,
+                score: min(100, Int(Double(s) * 1.05)),
+                summary: communicationSummary,
+                detail: "Mercury alignment shapes how you exchange ideas, process conflict, and understand each other's language."
+            ),
+            RelationshipDomain(
+                title: "Intimacy",
+                icon: "heart.fill",
+                color: Color(hex: "#FF6B9D"),
+                score: min(100, Int(Double(s) * 0.98)),
+                summary: intimacySummary,
+                detail: "Venus and Moon connections determine emotional depth, physical chemistry, and how safe you each feel being vulnerable."
+            ),
+            RelationshipDomain(
+                title: "Growth",
+                icon: "arrow.up.forward.circle.fill",
+                color: .cosmicSuccess,
+                score: min(100, Int(Double(s) * 0.92)),
+                summary: growthSummary,
+                detail: "Jupiter and Saturn aspects reveal whether this connection expands your world or challenges you to build something lasting."
+            ),
+            RelationshipDomain(
+                title: "Conflict Style",
+                icon: "bolt.circle.fill",
+                color: Color(hex: "#FFB800"),
+                score: min(100, Int(Double(s) * 0.87)),
+                summary: conflictSummary,
+                detail: "Mars placements show how you each assert needs and navigate disagreement — compatibility here means arguments that actually resolve."
+            ),
+        ]
+    }
+
+    private func domainCard(_ domain: RelationshipDomain) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: domain.icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(domain.color)
+                    .frame(width: 28, height: 28)
+                    .background(domain.color.opacity(0.12))
+                    .clipShape(Circle())
+
+                Text(domain.title)
+                    .font(SynergyFont.body(15, weight: .semibold))
+                    .foregroundColor(.cosmicNeutral)
+
+                Spacer()
+
+                Text("\(domain.score)%")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundColor(domain.color)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(domain.color.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            // Score bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.cosmicBorder)
+                    Capsule()
+                        .fill(domain.color.opacity(0.8))
+                        .frame(width: geo.size.width * CGFloat(domain.score) / 100)
+                }
+                .frame(height: 3)
+            }
+            .frame(height: 3)
+
+            Text(domain.summary)
+                .font(SynergyFont.body(13, weight: .medium))
+                .foregroundColor(.cosmicNeutral.opacity(0.85))
+
+            Text(domain.detail)
+                .font(SynergyFont.body(12))
+                .foregroundColor(.cosmicMuted)
+                .lineSpacing(3)
+        }
+        .padding(Spacing.lg)
+        .cosmicCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card)
+                .strokeBorder(domain.color.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Domain summary text
+
+    private var communicationSummary: String {
+        switch item.cosmicScore {
+        case 85...: return "Natural frequency match — you'll finish each other's thoughts."
+        case 70..<85: return "Strong flow with occasional disconnects that deepen understanding."
+        case 55..<70: return "Different styles, but complementary when you slow down to listen."
+        default: return "Requires patience — your mental wiring differs, which can spark growth."
+        }
+    }
+
+    private var intimacySummary: String {
+        let user = item.user
+        switch user.birthChart.venusSign.element {
+        case .water: return "Deep emotional attunement — vulnerability comes naturally here."
+        case .fire:  return "Passionate and immediate — the chemistry is hard to miss."
+        case .earth: return "Slow-building, sensory, and enduring — it only deepens over time."
+        case .air:   return "Intellectual first, physical second — connection lives in the mind."
+        }
+    }
+
+    private var growthSummary: String {
+        switch item.cosmicScore {
+        case 80...: return "This connection expands both of you — you'll leave each other changed."
+        case 65..<80: return "Meaningful growth potential, especially around shared beliefs."
+        default: return "Growth through friction — this connection will test and strengthen you."
+        }
+    }
+
+    private var conflictSummary: String {
+        switch item.cosmicScore {
+        case 80...: return "Arguments are rare and resolve quickly — you fight fair."
+        case 65..<80: return "Occasional friction that mostly leads to better understanding."
+        default: return "Hot-and-cold dynamic — managing Mars energy will be key."
         }
     }
 
