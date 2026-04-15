@@ -66,6 +66,10 @@ struct MatchScoreBadge: View {
             }
         }
         .cosmicGlow(color: scoreColor, radius: score > 85 ? 16 : 8)
+        .onAppear {
+            let style: UIImpactFeedbackGenerator.FeedbackStyle = score >= 90 ? .heavy : score >= 75 ? .medium : .light
+            UIImpactFeedbackGenerator(style: style).impactOccurred()
+        }
     }
 }
 

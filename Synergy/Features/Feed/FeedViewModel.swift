@@ -13,6 +13,8 @@ final class FeedViewModel: ObservableObject {
     @Published var lastSwipedItem: FeedItem? = nil  // For undo
     @Published var pendingIcebreakerText: String? = nil  // For icebreaker→chat handoff
 
+    @AppStorage("minCosmicScore") private var minCosmicScore: Double = 60
+
     private var swipedIds: Set<UUID> = []
 
     init() { loadFeed() }
@@ -107,11 +109,13 @@ final class FeedViewModel: ObservableObject {
     // MARK: - Remaining deck
 
     var visibleItems: [FeedItem] {
-        Array(feedItems.dropFirst(currentIndex).prefix(3))
+        let filtered = feedItems.filter { $0.cosmicScore >= Int(minCosmicScore) }
+        return Array(filtered.dropFirst(currentIndex).prefix(3))
     }
 
     var isEmpty: Bool {
-        currentIndex >= feedItems.count
+        let filtered = feedItems.filter { $0.cosmicScore >= Int(minCosmicScore) }
+        return currentIndex >= filtered.count
     }
 
     // MARK: - Analytics stub

@@ -342,25 +342,54 @@ struct TodayView: View {
                 Text("ALIGNED_TODAY")
                     .systemLabel()
                 Spacer()
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(.cosmicCyan)
-                Text("transit active")
-                    .systemLabel()
-                    .foregroundColor(.cosmicCyan)
+                if !vm.alignedMatches.isEmpty {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.cosmicCyan)
+                    Text("transit active")
+                        .systemLabel()
+                        .foregroundColor(.cosmicCyan)
+                }
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.md) {
-                    ForEach(vm.alignedMatches) { item in
-                        Button { selectedAlignedMatch = item } label: {
-                            AlignedMatchChip(item: item)
+            if vm.alignedMatches.isEmpty {
+                alignedMatchesEmptyState
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.md) {
+                        ForEach(vm.alignedMatches) { item in
+                            Button { selectedAlignedMatch = item } label: {
+                                AlignedMatchChip(item: item)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
         }
+    }
+
+    private var alignedMatchesEmptyState: some View {
+        HStack(spacing: Spacing.md) {
+            Image(systemName: "moon.zzz.fill")
+                .font(.system(size: 22))
+                .foregroundColor(.cosmicMuted.opacity(0.5))
+                .frame(width: 40, height: 40)
+                .background(Color.cosmicCard)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("No active alignments today")
+                    .font(SynergyFont.body(14, weight: .medium))
+                    .foregroundColor(.cosmicNeutral.opacity(0.7))
+                Text("Check back tomorrow — the sky shifts daily.")
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicMuted)
+            }
+        }
+        .padding(Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cosmicCard()
     }
 
     // MARK: - Weekly Report Card
