@@ -210,7 +210,7 @@ struct OnboardingDiscoveryView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("SEQUENCE // 06")
+            Text("05 / 07")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan.opacity(0.8))
             Text("Who you'd like to meet")

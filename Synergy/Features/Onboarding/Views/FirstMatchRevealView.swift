@@ -61,7 +61,7 @@ struct FirstMatchRevealView: View {
 
     private var header: some View {
         VStack(spacing: Spacing.sm) {
-            Text("SEQUENCE // 07")
+            Text("07 / 07")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan.opacity(0.8))
 

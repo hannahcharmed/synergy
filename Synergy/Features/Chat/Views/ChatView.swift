@@ -470,7 +470,7 @@ struct MessageBubble: View {
 
                 VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 4) {
                     bubbleContent
-                        .onLongPressGesture {
+                        .onTapGesture(count: 2) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             withAnimation(.spring(response: 0.3)) { showReactionPicker.toggle() }
                         }

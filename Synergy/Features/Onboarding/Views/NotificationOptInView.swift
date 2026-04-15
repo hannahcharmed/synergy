@@ -8,6 +8,11 @@ struct NotificationOptInView: View {
     @EnvironmentObject var vm: OnboardingViewModel
     @State private var appeared = false
     @State private var bellPulse = false
+    @State private var readingTime: Date = {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 7; components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,6 +38,13 @@ struct NotificationOptInView: View {
 
     private var content: some View {
         VStack(spacing: Spacing.xl) {
+            // Sequence label
+            Text("06 / 07")
+                .systemLabel()
+                .foregroundColor(.cosmicCyan.opacity(0.8))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .opacity(appeared ? 1 : 0)
+
             // Moon icon with glow
             ZStack {
                 Circle()
@@ -57,10 +69,37 @@ struct NotificationOptInView: View {
                     .foregroundColor(.cosmicNeutral)
                     .multilineTextAlignment(.center)
 
-                Text("Receive your daily reading every morning at 7am")
-                    .font(SynergyFont.body(16))
+                Text("Choose when to receive your daily reading")
+                    .font(SynergyFont.body(15))
                     .foregroundColor(.cosmicNeutral.opacity(0.7))
                     .multilineTextAlignment(.center)
+
+                // Time picker
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.cosmicCyan)
+                    Text("Send at")
+                        .font(SynergyFont.body(14))
+                        .foregroundColor(.cosmicNeutral)
+                    Spacer()
+                    DatePicker("", selection: $readingTime, displayedComponents: .hourAndMinute)
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                        .colorScheme(.dark)
+                        .accentColor(.cosmicCyan)
+                }
+                .padding(Spacing.md)
+                .background(Color.cosmicCard)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.sm)
+                        .strokeBorder(Color.cosmicCyan.opacity(0.3), lineWidth: 1)
+                )
+
+                Text("You can update this anytime in Settings")
+                    .font(SynergyFont.body(12))
+                    .foregroundColor(.cosmicMuted)
 
                 // Value hook — specific promise
                 valueRow

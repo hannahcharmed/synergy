@@ -19,6 +19,8 @@ struct ProfileSetupView: View {
     @State private var promptDraft: [String] = ["", "", ""]
     @State private var promptQuestions: [PromptQuestion] = [.wrongAboutSign, .perfectDay, .loveLanguage]
     @State private var activePromptSlots: Int = 1
+    @State private var showPromptPicker = false
+    @State private var pickingSlot: Int = 0
 
     private var signPrompt: String {
         guard let chart = vm.computedChart else { return "What do people always get wrong about you?" }
@@ -64,6 +66,12 @@ struct ProfileSetupView: View {
                 vm.photos.append(contentsOf: images)
             }
         }
+        .sheet(isPresented: $showPromptPicker) {
+            PromptPickerSheet(selectedQuestion: promptQuestions[pickingSlot]) { chosen in
+                promptQuestions[pickingSlot] = chosen
+                showPromptPicker = false
+            }
+        }
         .onDisappear { syncPromptsToVM() }
     }
 
@@ -79,7 +87,7 @@ struct ProfileSetupView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("SEQUENCE // 05")
+            Text("04 / 07")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan.opacity(0.8))
 
@@ -368,13 +376,10 @@ struct ProfileSetupView: View {
 
     private func promptSlot(index: Int) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            // Question picker
-            Menu {
-                ForEach(PromptQuestion.allCases, id: \.self) { q in
-                    Button(q.rawValue) {
-                        promptQuestions[index] = q
-                    }
-                }
+            // Question picker — Hinge-style sheet
+            Button {
+                pickingSlot = index
+                showPromptPicker = true
             } label: {
                 HStack {
                     Text(promptQuestions[index].rawValue)
@@ -465,6 +470,69 @@ struct ProfileSetupView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: vm.canAdvanceFromProfile)
+    }
+}
+
+// MARK: - Prompt Picker Sheet (Hinge-style)
+
+struct PromptPickerSheet: View {
+    let selectedQuestion: PromptQuestion
+    let onSelect: (PromptQuestion) -> Void
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        ForEach(PromptQuestion.allCases, id: \.self) { question in
+                            Button {
+                                onSelect(question)
+                            } label: {
+                                HStack(spacing: Spacing.md) {
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(question.rawValue)
+                                            .font(SynergyFont.body(15))
+                                            .foregroundColor(.cosmicNeutral)
+                                            .multilineTextAlignment(.leading)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    Spacer()
+                                    if question == selectedQuestion {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.cosmicCyan)
+                                    }
+                                }
+                                .padding(.horizontal, Spacing.xl)
+                                .padding(.vertical, Spacing.md)
+                                .background(
+                                    question == selectedQuestion
+                                        ? Color.cosmicCyan.opacity(0.08)
+                                        : Color.clear
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider()
+                                .overlay(Color.cosmicBorder)
+                                .padding(.leading, Spacing.xl)
+                        }
+                    }
+                    .padding(.top, Spacing.sm)
+                }
+            }
+            .navigationTitle("Choose a prompt")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.cosmicMuted)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
     }
 }
 

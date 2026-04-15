@@ -6,6 +6,7 @@ struct TodayView: View {
     @EnvironmentObject var vm: TodayViewModel
     @State private var selectedRitual: RitualEvent? = nil
     @State private var showWeeklyReport = false
+    @State private var selectedAlignedMatch: FeedItem? = nil
 
     var body: some View {
         NavigationView {
@@ -31,6 +32,9 @@ struct TodayView: View {
             }
             .sheet(isPresented: $showWeeklyReport) {
                 WeeklyReportSheet(entries: vm.weeklyReport)
+            }
+            .sheet(item: $selectedAlignedMatch) { match in
+                AlignedMatchProfileSheet(item: match)
             }
             .navigationBarHidden(true)
             .animation(.easeInOut(duration: 0.3), value: vm.showTransitAlert)
@@ -349,7 +353,10 @@ struct TodayView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Spacing.md) {
                     ForEach(vm.alignedMatches) { item in
-                        AlignedMatchChip(item: item)
+                        Button { selectedAlignedMatch = item } label: {
+                            AlignedMatchChip(item: item)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -709,5 +716,197 @@ struct WeeklyReportSheet: View {
             RoundedRectangle(cornerRadius: Radius.card)
                 .strokeBorder(Color.cosmicBorder, lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Aligned Match Profile Sheet
+
+struct AlignedMatchProfileSheet: View {
+    let item: FeedItem
+    @Environment(\.dismiss) var dismiss
+
+    // These would navigate to the full Feed/Profile tabs in production
+    @State private var showSynastry = false
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: Spacing.xl) {
+                            // Avatar + name
+                            heroSection
+
+                            // Cosmic score + highlights
+                            scoreSection
+
+                            // First prompt if available
+                            if let prompt = item.user.profile.prompts.first {
+                                promptCard(prompt)
+                            }
+
+                            // Vibe words
+                            if !item.user.profile.vibeWords.isEmpty {
+                                vibeSection
+                            }
+                        }
+                        .padding(Spacing.xl)
+                        .padding(.bottom, 120)
+                    }
+
+                    // Sticky action buttons
+                    actionButtons
+                }
+            }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(.cosmicMuted)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+        .sheet(isPresented: $showSynastry) {
+            SynastryDetailSheet(item: item)
+        }
+    }
+
+    // MARK: - Hero
+
+    private var heroSection: some View {
+        VStack(spacing: Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(LinearGradient.cosmicGradient)
+                    .frame(width: 90, height: 90)
+                Text(item.user.displayName.prefix(1))
+                    .font(SynergyFont.headline(36))
+                    .foregroundColor(.cosmicDark)
+            }
+            .cosmicGlow(color: .cosmicCyan, radius: 16)
+
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Text("\(item.user.displayName), \(item.user.age)")
+                        .font(SynergyFont.headline(22))
+                        .foregroundColor(.cosmicNeutral)
+                    if item.user.isVerified {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.cosmicCyan)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    Text("\(item.user.birthChart.sunSign.symbol) \(item.user.birthChart.sunSign.rawValue)")
+                    Text("·")
+                    Text("\(item.user.birthChart.risingSign.rawValue) rising")
+                    if let dist = item.user.distanceMiles {
+                        Text("· \(String(format: "%.0f", dist)) mi")
+                    }
+                }
+                .font(SynergyFont.body(13))
+                .foregroundColor(.cosmicMuted)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, Spacing.md)
+    }
+
+    // MARK: - Score
+
+    private var scoreSection: some View {
+        VStack(spacing: Spacing.md) {
+            MatchScoreBadge(score: item.cosmicScore, size: .large)
+
+            if !item.highlights.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.sm) {
+                        ForEach(item.highlights, id: \.self) { h in
+                            PlanetAspectTag(text: h, highlighted: true)
+                        }
+                    }
+                }
+            }
+
+            if let boost = item.transitBoost {
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 10))
+                    Text(boost.description)
+                        .font(SynergyFont.body(12))
+                }
+                .foregroundColor(.cosmicCyan)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.cosmicCyan.opacity(0.1))
+                .clipShape(Capsule())
+            }
+        }
+    }
+
+    // MARK: - Prompt card
+
+    private func promptCard(_ prompt: ProfilePrompt) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text(prompt.question.uppercased())
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(.cosmicCyan.opacity(0.7))
+                .kerning(0.5)
+            Text("\u{201C}\(prompt.answer)\u{201D}")
+                .font(SynergyFont.body(15))
+                .foregroundColor(.cosmicNeutral.opacity(0.85))
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cosmicCard()
+    }
+
+    // MARK: - Vibe words
+
+    private var vibeSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("VIBE")
+                .systemLabel()
+            HStack(spacing: Spacing.sm) {
+                ForEach(item.user.profile.vibeWords, id: \.self) { word in
+                    Text(word)
+                        .font(SynergyFont.body(13))
+                        .foregroundColor(.cosmicCyan)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.cosmicCyan.opacity(0.08))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(Color.cosmicCyan.opacity(0.3), lineWidth: 1))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Action buttons
+
+    private var actionButtons: some View {
+        VStack(spacing: Spacing.sm) {
+            Divider().overlay(Color.cosmicBorder)
+            VStack(spacing: Spacing.sm) {
+                CosmicButton("View synastry", variant: .gradient) {
+                    showSynastry = true
+                }
+                CosmicButton("View full profile", variant: .outlined) {
+                    // In production: navigate to full MatchCard / Feed detail
+                    dismiss()
+                }
+            }
+            .padding(.horizontal, Spacing.xl)
+            .padding(.bottom, Spacing.lg)
+        }
+        .background(Color.cosmicDark)
     }
 }

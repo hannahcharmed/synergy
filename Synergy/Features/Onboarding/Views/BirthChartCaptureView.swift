@@ -36,7 +36,7 @@ struct BirthChartCaptureView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("SEQUENCE // 02")
+            Text("01 / 07")
                 .systemLabel()
                 .foregroundColor(.cosmicCyan.opacity(0.8))
 
