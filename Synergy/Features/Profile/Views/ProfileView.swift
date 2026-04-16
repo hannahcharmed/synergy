@@ -363,9 +363,9 @@ struct ProfileView: View {
                 .lineSpacing(3)
         } else {
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(user.profile.prompts.enumerated()), id: \.element.id) { idx, prompt in
+                ForEach(user.profile.prompts.indices, id: \.self) { idx in
                     if idx > 0 { Divider().overlay(Color.cosmicBorder.opacity(0.5)) }
-                    singlePrompt(prompt)
+                    singlePrompt(user.profile.prompts[idx])
                 }
             }
         }
