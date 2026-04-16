@@ -76,12 +76,12 @@ enum Element: String, Codable, CaseIterable {
     case air = "Air"
     case water = "Water"
 
-    var emoji: String {
+    var symbol: String {
         switch self {
-        case .fire:  return "🔥"
-        case .earth: return "🌿"
-        case .air:   return "💨"
-        case .water: return "💧"
+        case .fire:  return "Fire"
+        case .earth: return "Earth"
+        case .air:   return "Air"
+        case .water: return "Water"
         }
     }
 

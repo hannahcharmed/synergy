@@ -362,8 +362,9 @@ struct ProfileView: View {
                 .foregroundColor(.cosmicMuted)
                 .lineSpacing(3)
         } else {
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                ForEach(user.profile.prompts) { prompt in
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(user.profile.prompts.enumerated()), id: \.element.id) { idx, prompt in
+                    if idx > 0 { Divider().overlay(Color.cosmicBorder.opacity(0.5)) }
                     singlePrompt(prompt)
                 }
             }
@@ -371,20 +372,19 @@ struct ProfileView: View {
     }
 
     private func singlePrompt(_ prompt: ProfilePrompt) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(prompt.question.uppercased())
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .foregroundColor(.cosmicCyan)
-                .kerning(0.5)
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundColor(.cosmicMuted)
+                .kerning(0.8)
             Text(prompt.answer)
-                .font(SynergyFont.body(14))
+                .font(SynergyFont.body(16))
                 .foregroundColor(.cosmicNeutral)
-                .lineSpacing(3)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(Spacing.md)
+        .padding(.vertical, Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cosmicDarkAlt)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
     }
 
     // MARK: - Settings Section
@@ -763,9 +763,6 @@ struct DiscoverySettingsSheet: View {
                             VStack(alignment: .leading, spacing: Spacing.md) {
                                 HStack {
                                     HStack(spacing: 6) {
-                                        Image(systemName: "sparkles")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.cosmicCyan)
                                         Text("Minimum match score")
                                             .font(SynergyFont.body(15))
                                             .foregroundColor(.cosmicNeutral)
@@ -962,7 +959,6 @@ struct EditProfileSheet: View {
             HStack {
                 Label("PHOTOS (up to 6)", systemImage: "photo.stack")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan)
                 Spacer()
                 Text("\(photoSlots.count) / 6")
                     .systemLabel()
@@ -1071,7 +1067,6 @@ struct EditProfileSheet: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("BIRTH_TIME", systemImage: "clock.fill")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan)
 
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
@@ -1111,7 +1106,6 @@ struct EditProfileSheet: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("BIO", systemImage: "text.alignleft")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: Radius.md)
                     .fill(Color.cosmicDarkAlt)
@@ -1159,7 +1153,6 @@ struct EditProfileSheet: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("VIBE WORDS (up to 3)", systemImage: "tag")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan)
 
             // Zodiac-based suggestion chips
             if currentVibeWords.count < 3 {
@@ -1211,7 +1204,6 @@ struct EditProfileSheet: View {
             HStack {
                 Label("PROMPTS (up to 3)", systemImage: "quote.bubble")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan)
                 Spacer()
                 if prompts.count < 3 {
                     Button {
@@ -1280,7 +1272,7 @@ struct EditProfileSheet: View {
             HStack {
                 Text(prompts[index].question.uppercased())
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundColor(.cosmicCyan)
+                    .foregroundColor(.cosmicMuted)
                     .kerning(0.5)
                     .lineLimit(1)
                 Spacer()

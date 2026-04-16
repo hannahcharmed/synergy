@@ -317,7 +317,7 @@ enum MockData {
                     readAt: Date().addingTimeInterval(-85000),
                     isFromCurrentUser: true),
             Message(conversationId: conversationId, senderId: otherId,
-                    content: "We're not as scary as we seem, just selective 😌 I've been to three therapy sessions this week and I still managed to rewire my whole flat.",
+                    content: "We're not as scary as we seem, just selective. I've been to three therapy sessions this week and I still managed to rewire my whole flat.",
                     createdAt: Date().addingTimeInterval(-84000),
                     readAt: Date().addingTimeInterval(-83000),
                     isFromCurrentUser: false,

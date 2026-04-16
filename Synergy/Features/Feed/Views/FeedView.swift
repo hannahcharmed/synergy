@@ -64,7 +64,6 @@ struct FeedView: View {
                     .kerning(4)
                 Text("discover")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan.opacity(0.8))
             }
 
             Spacer()
@@ -108,52 +107,58 @@ struct FeedView: View {
     }
 
     private func cardScale(for index: Int) -> CGFloat {
-        1.0 - CGFloat(index) * 0.03
+        1.0 - CGFloat(index) * 0.04
     }
 
     private func cardOffset(for index: Int) -> CGFloat {
-        CGFloat(index) * 12
+        CGFloat(index) * 22
     }
 
     // MARK: - Action Buttons
 
     private var actionButtons: some View {
-        VStack(spacing: Spacing.sm) {
-            // Undo hint label (shown when undo is available)
-            if vm.lastSwipedItem != nil {
-                Text("Tap \u{21BA} to undo your last pass")
-                    .font(SynergyFont.body(11))
-                    .foregroundColor(.cosmicMuted)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+        HStack {
+            deckButton(icon: "xmark", label: "PASS", color: .cosmicError, size: 62) {
+                if let item = vm.visibleItems.first { vm.pass(item) }
             }
-
-            HStack(spacing: Spacing.xl) {
-                // Pass
-                CosmicIconButton("xmark", variant: .outlined, size: 60) {
-                    if let item = vm.visibleItems.first { vm.pass(item) }
+            Spacer()
+            if vm.lastSwipedItem != nil {
+                deckButton(icon: "arrow.uturn.backward", label: "UNDO", color: .cosmicMuted, size: 46) {
+                    vm.undoLastSwipe()
                 }
-
-                // Undo last pass (only visible when available)
-                if vm.lastSwipedItem != nil {
-                    CosmicIconButton("arrow.uturn.backward", variant: .gradient, size: 44) {
-                        vm.undoLastSwipe()
-                    }
-                    .transition(.scale.combined(with: .opacity))
-                }
-
-                // Super Like (star)
-                CosmicIconButton("star.fill", variant: .gradient, size: 52) {
-                    if let item = vm.visibleItems.first { vm.superLike(item) }
-                }
-
-                // Like
-                CosmicIconButton("heart.fill", variant: .outlined, size: 60) {
-                    if let item = vm.visibleItems.first { vm.like(item) }
-                }
+                .transition(.scale.combined(with: .opacity))
+                Spacer()
+            }
+            deckButton(icon: "star.fill", label: "STAR", color: .cosmicPurple, size: 54) {
+                if let item = vm.visibleItems.first { vm.superLike(item) }
+            }
+            Spacer()
+            deckButton(icon: "heart.fill", label: "LIKE", color: .cosmicCyan, size: 62) {
+                if let item = vm.visibleItems.first { vm.like(item) }
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: vm.lastSwipedItem?.id)
-        .padding(.vertical, Spacing.lg)
+        .padding(.vertical, Spacing.md)
+        .padding(.horizontal, Spacing.xl)
+    }
+
+    private func deckButton(icon: String, label: String, color: Color, size: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: size * 0.36, weight: .semibold))
+                    .foregroundColor(color)
+                    .frame(width: size, height: size)
+                    .background(Color.cosmicCard)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(color.opacity(0.35), lineWidth: 1.5))
+                Text(label)
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(color.opacity(0.7))
+                    .kerning(1)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Loading / Empty
@@ -172,9 +177,9 @@ struct FeedView: View {
     private var emptyState: some View {
         VStack(spacing: Spacing.lg) {
             Spacer()
-            Text("✦")
-                .font(.system(size: 48))
-                .foregroundColor(.cosmicCyan.opacity(0.5))
+            Image(systemName: "moon.stars.fill")
+                .font(.system(size: 42))
+                .foregroundColor(.cosmicCyan.opacity(0.4))
             Text("You've seen everyone nearby")
                 .font(SynergyFont.headline(20))
                 .foregroundColor(.cosmicNeutral)
@@ -358,29 +363,45 @@ struct SynastryDetailSheet: View {
     }
 
     private var scoreHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("COSMIC_MATCH_SCORE™")
-                    .systemLabel()
-                HStack(alignment: .lastTextBaseline, spacing: 4) {
-                    Text("\(item.cosmicScore)")
-                        .font(SynergyFont.scoreDisplay)
-                        .foregroundColor(.cosmicNeutral)
-                    Text("/ 100")
-                        .font(SynergyFont.body(16))
-                        .foregroundColor(.cosmicMuted)
-                }
-                HStack(spacing: Spacing.sm) {
-                    ForEach(item.highlights.prefix(2), id: \.self) { h in
-                        PlanetAspectTag(text: h, highlighted: true)
+        VStack(spacing: 0) {
+            elementAffinityStrip
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    Text("COSMIC MATCH")
+                        .systemLabel()
+                    HStack(alignment: .lastTextBaseline, spacing: 4) {
+                        Text("\(item.cosmicScore)")
+                            .font(SynergyFont.scoreDisplay)
+                            .foregroundColor(.cosmicNeutral)
+                        Text("/ 100")
+                            .font(SynergyFont.body(16))
+                            .foregroundColor(.cosmicMuted)
                     }
                 }
+                Spacer()
+                MatchScoreBadge(score: item.cosmicScore, size: .large)
             }
-            Spacer()
-            MatchScoreBadge(score: item.cosmicScore, size: .large)
+            .padding(Spacing.lg)
         }
-        .padding(Spacing.lg)
         .cosmicCard()
+    }
+
+    private var elementAffinityStrip: some View {
+        let matchElement = item.user.birthChart.sunSign.element
+        return HStack(spacing: 0) {
+            Rectangle().fill(Color.cosmicWater).frame(maxWidth: .infinity)
+            Rectangle().fill(elementThemeColor(matchElement)).frame(maxWidth: .infinity)
+        }
+        .frame(height: 3)
+    }
+
+    private func elementThemeColor(_ element: Element) -> Color {
+        switch element {
+        case .fire:  return .cosmicFire
+        case .earth: return .cosmicEarth
+        case .air:   return .cosmicAir
+        case .water: return .cosmicWater
+        }
     }
 
     private var radarSection: some View {
@@ -427,7 +448,6 @@ struct SynastryDetailSheet: View {
                 Spacer()
                 Text("\(score) pts · \(weight)%")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan)
             }
             GeometryReader { g in
                 ZStack(alignment: .leading) {

@@ -111,8 +111,8 @@ struct TodayView: View {
             // Streak indicator (compact, top-right)
             if vm.streakDays >= 2 {
                 HStack(spacing: 4) {
-                    Text("✦")
-                        .font(.system(size: 11))
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 10))
                     Text("\(vm.streakDays)")
                         .font(.system(size: 13, weight: .bold, design: .monospaced))
                 }
@@ -142,7 +142,6 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("TRANSIT_ACTIVE · +\(alert.boostPercent)% BOOST")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan)
                 Text(alert.description)
                     .font(SynergyFont.body(13, weight: .medium))
                     .foregroundColor(.cosmicNeutral)
@@ -246,10 +245,9 @@ struct TodayView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
-                Image(systemName: "sparkles")
+                Image(systemName: "moon.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.cosmicCyan)
-                    .cosmicGlow(color: .cosmicCyan, radius: 8)
+                    .foregroundColor(.cosmicMuted.opacity(0.7))
             }
 
             Text(h.content)
@@ -295,7 +293,7 @@ struct TodayView: View {
                     .fill(LinearGradient.cosmicGradient)
                     .opacity(0.2)
                     .frame(width: 44, height: 44)
-                Text("✦")
+                Image(systemName: "flame.fill")
                     .font(.system(size: 20))
                     .foregroundStyle(LinearGradient.cosmicGradient)
             }
@@ -345,10 +343,9 @@ struct TodayView: View {
                 if !vm.alignedMatches.isEmpty {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 10))
-                        .foregroundColor(.cosmicCyan)
+                        .foregroundColor(.cosmicMuted)
                     Text("transit active")
                         .systemLabel()
-                        .foregroundColor(.cosmicCyan)
                 }
             }
 
@@ -718,7 +715,6 @@ struct WeeklyReportSheet: View {
                         .foregroundColor(.cosmicNeutral)
                     Text("BEST DAY: \(entry.bestDay.uppercased())")
                         .systemLabel()
-                        .foregroundColor(.cosmicCyan)
                 }
                 Spacer()
                 MatchScorePill(score: entry.cosmicScore)
@@ -884,7 +880,7 @@ struct AlignedMatchProfileSheet: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(prompt.question.uppercased())
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.cosmicCyan.opacity(0.7))
+                .foregroundColor(.cosmicMuted)
                 .kerning(0.5)
             Text("\u{201C}\(prompt.answer)\u{201D}")
                 .font(SynergyFont.body(15))
