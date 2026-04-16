@@ -225,69 +225,44 @@ struct MatchCardView: View {
 
     // Card background is always dark so use explicit white-family colours in the panel.
     private var infoPanel: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            // Name + score
-            HStack(alignment: .bottom) {
-                cardNameBlock
-                Spacer()
-                MatchScoreBadge(score: item.cosmicScore, size: .medium)
-            }
+        VStack(alignment: .leading, spacing: 10) {
+            cardNameBlock
 
             // Transit boost (if active)
             if let boost = item.transitBoost {
-                HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 10))
-                    Text(boost.description)
-                        .font(SynergyFont.body(12))
+                HStack(spacing: 5) {
+                    Image(systemName: "arrow.up.right.circle.fill").font(.system(size: 10))
+                    Text(boost.description).font(SynergyFont.body(11))
                 }
                 .foregroundColor(Color(hex: "#00F0FF"))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color(hex: "#00F0FF").opacity(0.12))
-                .clipShape(Capsule())
-            }
-
-            // Aspect highlights
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.sm) {
-                    ForEach(item.highlights, id: \.self) { h in
-                        PlanetAspectTag(text: h, highlighted: true)
-                    }
-                }
+                .padding(.horizontal, 9).padding(.vertical, 4)
+                .background(Color(hex: "#00F0FF").opacity(0.10)).clipShape(Capsule())
             }
 
             // Vibe tags
             if !item.user.profile.vibeWords.isEmpty {
-                HStack(spacing: Spacing.sm) {
+                HStack(spacing: 6) {
                     ForEach(item.user.profile.vibeWords, id: \.self) { word in
-                        Text(word)
-                            .font(SynergyFont.body(12))
-                            .foregroundColor(Color.white.opacity(0.8))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Capsule())
+                        Text(word).font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color.white.opacity(0.65))
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(Color.white.opacity(0.07)).clipShape(Capsule())
                     }
                 }
             }
 
             // First prompt (Hinge-style)
-            if let prompt = item.user.profile.prompts.first {
-                promptRow(prompt)
-            }
+            if let prompt = item.user.profile.prompts.first { promptRow(prompt) }
 
             // Swipe-up hint (only on top card)
             if isTop {
                 HStack {
                     Spacer()
                     HStack(spacing: 4) {
-                        Image(systemName: "chevron.up")
-                            .font(.system(size: 9, weight: .semibold))
-                        Text("synastry")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        Image(systemName: "chevron.up").font(.system(size: 9, weight: .semibold))
+                        Text("synastry").font(.system(size: 10, weight: .medium, design: .monospaced))
                     }
-                    .foregroundColor(Color.white.opacity(0.45))
+                    .foregroundColor(Color.white.opacity(0.35))
                     Spacer()
                 }
             }
@@ -297,57 +272,55 @@ struct MatchCardView: View {
     }
 
     private var cardNameBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("\(item.user.displayName), \(item.user.age)")
-                    .font(SynergyFont.headline(24))
+                    .font(SynergyFont.headline(28))
                     .foregroundColor(.white)
                 if item.user.isVerified {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 13))
                         .foregroundColor(Color(hex: "#00F0FF"))
                 }
+                Spacer()
+                MatchScorePill(score: item.cosmicScore)
             }
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Text("\(item.user.birthChart.sunSign.symbol) \(item.user.birthChart.sunSign.rawValue)")
-                    .font(SynergyFont.body(13))
                 Text("·")
                 Text("\(item.user.birthChart.risingSign.rawValue) rising")
-                    .font(SynergyFont.body(13))
                 if let dist = item.user.distanceMiles {
-                    Text("· \(String(format: "%.1f", dist)) mi")
-                        .font(SynergyFont.body(13))
+                    Text("· \(String(format: "%.0f", dist)) mi")
                 }
             }
-            .foregroundColor(Color.white.opacity(0.65))
+            .font(SynergyFont.body(13))
+            .foregroundColor(Color.white.opacity(0.55))
         }
     }
 
     private func promptRow(_ prompt: ProfilePrompt) -> some View {
         let isTruncated = prompt.answer.count > 80
-        return VStack(alignment: .leading, spacing: 4) {
+        return VStack(alignment: .leading, spacing: 5) {
+            Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
             Text(prompt.question.uppercased())
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .foregroundColor(Color.white.opacity(0.5))
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundColor(Color.white.opacity(0.4))
                 .kerning(0.5)
                 .lineLimit(1)
+                .padding(.top, 5)
             Text("\u{201C}\(prompt.answer)\u{201D}")
-                .font(SynergyFont.body(13))
+                .font(SynergyFont.body(14))
                 .foregroundColor(.white)
-                .lineLimit(2)
-                .lineSpacing(2)
+                .lineLimit(3)
+                .lineSpacing(3)
             if isTruncated {
-                Text("read more")
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                    .foregroundColor(Color.white.opacity(0.45))
+                Text("continue reading")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundColor(Color.white.opacity(0.4))
                     .kerning(0.5)
             }
         }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.3))
-        .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
     }
 
     // MARK: - Drag Gesture

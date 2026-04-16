@@ -362,8 +362,9 @@ struct ProfileView: View {
                 .foregroundColor(.cosmicMuted)
                 .lineSpacing(3)
         } else {
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                ForEach(user.profile.prompts) { prompt in
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(user.profile.prompts.enumerated()), id: \.element.id) { idx, prompt in
+                    if idx > 0 { Divider().overlay(Color.cosmicBorder.opacity(0.5)) }
                     singlePrompt(prompt)
                 }
             }
@@ -371,20 +372,19 @@ struct ProfileView: View {
     }
 
     private func singlePrompt(_ prompt: ProfilePrompt) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(prompt.question.uppercased())
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .foregroundColor(.cosmicCyan)
-                .kerning(0.5)
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundColor(.cosmicMuted)
+                .kerning(0.8)
             Text(prompt.answer)
-                .font(SynergyFont.body(14))
+                .font(SynergyFont.body(16))
                 .foregroundColor(.cosmicNeutral)
-                .lineSpacing(3)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(Spacing.md)
+        .padding(.vertical, Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cosmicDarkAlt)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
     }
 
     // MARK: - Settings Section
@@ -763,9 +763,6 @@ struct DiscoverySettingsSheet: View {
                             VStack(alignment: .leading, spacing: Spacing.md) {
                                 HStack {
                                     HStack(spacing: 6) {
-                                        Image(systemName: "sparkles")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.cosmicCyan)
                                         Text("Minimum match score")
                                             .font(SynergyFont.body(15))
                                             .foregroundColor(.cosmicNeutral)
@@ -905,6 +902,8 @@ struct EditProfileSheet: View {
     @State private var vibeWord2: String
     @State private var vibeWord3: String
     @State private var prompts: [ProfilePrompt]
+    @State private var photoSlots: [String]
+    @State private var birthTime: Date
 
     init(user: User) {
         self.user = user
@@ -914,6 +913,9 @@ struct EditProfileSheet: View {
         _vibeWord2 = State(initialValue: words[1])
         _vibeWord3 = State(initialValue: words[2])
         _prompts = State(initialValue: user.profile.prompts)
+        _photoSlots = State(initialValue: Array(user.profile.photos.prefix(6)))
+        let defaultTime = Calendar.current.date(bySettingHour: 7, minute: 0, second: 0, of: Date()) ?? Date()
+        _birthTime = State(initialValue: user.birthChart.birthTime ?? defaultTime)
     }
 
     var body: some View {
@@ -922,9 +924,11 @@ struct EditProfileSheet: View {
                 Color.cosmicDark.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: Spacing.xl) {
+                        photosSection
                         bioSection
                         vibeSection
                         promptsSection
+                        birthTimeSection
                         Spacer(minLength: 40)
                     }
                     .padding(.horizontal, Spacing.xl)
@@ -948,11 +952,160 @@ struct EditProfileSheet: View {
         .navigationViewStyle(.stack)
     }
 
+    // MARK: - Photos Section
+
+    private var photosSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Label("PHOTOS (up to 6)", systemImage: "photo.stack")
+                    .systemLabel()
+                Spacer()
+                Text("\(photoSlots.count) / 6")
+                    .systemLabel()
+                    .foregroundColor(.cosmicMuted)
+            }
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.sm), count: 3),
+                spacing: Spacing.sm
+            ) {
+                ForEach(photoSlots.indices, id: \.self) { idx in
+                    photoSlotView(index: idx)
+                }
+                if photoSlots.count < 6 {
+                    addPhotoButtonView
+                }
+            }
+
+            Text("Tap × to remove a photo. Real upload coming in v1.1.")
+                .font(SynergyFont.body(11))
+                .foregroundColor(.cosmicMuted)
+        }
+    }
+
+    private func photoSlotView(index: Int) -> some View {
+        ZStack(alignment: .topTrailing) {
+            ZStack {
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                photoSlotColor(index).opacity(0.55),
+                                photoSlotColor(index).opacity(0.25)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                VStack(spacing: 6) {
+                    Text(user.displayName.prefix(1))
+                        .font(SynergyFont.headline(26))
+                        .foregroundColor(.white.opacity(0.35))
+                    Text("Photo \(index + 1)")
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.3))
+                }
+            }
+            .aspectRatio(0.75, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+
+            // Remove badge
+            Button {
+                withAnimation(.spring(response: 0.3)) {
+                    photoSlots.remove(at: index)
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.cosmicError)
+                        .frame(width: 20, height: 20)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(4)
+        }
+    }
+
+    private var addPhotoButtonView: some View {
+        Button {
+            withAnimation(.spring(response: 0.3)) {
+                photoSlots.append("\(user.displayName.lowercased())_\(photoSlots.count + 1)")
+            }
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .fill(Color.cosmicDarkAlt)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.md)
+                            .strokeBorder(Color.cosmicBorder, lineWidth: 1.5)
+                    )
+                VStack(spacing: 6) {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(.cosmicCyan.opacity(0.65))
+                    Text("Add")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(.cosmicMuted)
+                }
+            }
+            .aspectRatio(0.75, contentMode: .fit)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func photoSlotColor(_ index: Int) -> Color {
+        let palette: [Color] = [.cosmicPurple, .cosmicCyan, Color(hex: "#FF6B9D"),
+                                Color(hex: "#FFB800"), Color(hex: "#34D399"), Color(hex: "#7D5FFF")]
+        return palette[index % palette.count]
+    }
+
+    // MARK: - Birth Time Section
+
+    private var birthTimeSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Label("BIRTH_TIME", systemImage: "clock.fill")
+                .systemLabel()
+
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Correct birth time")
+                        .font(SynergyFont.body(14))
+                        .foregroundColor(.cosmicNeutral)
+                    Text("Improving accuracy recalculates your chart")
+                        .font(SynergyFont.body(11))
+                        .foregroundColor(.cosmicMuted)
+                }
+                Spacer()
+                DatePicker("", selection: $birthTime, displayedComponents: [.hourAndMinute])
+                    .labelsHidden()
+                    .tint(.cosmicCyan)
+                    .environment(\.colorScheme, .dark)
+            }
+            .padding(Spacing.lg)
+            .background(Color.cosmicDarkAlt)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md)
+                .strokeBorder(Color.cosmicBorder, lineWidth: 1))
+
+            if user.birthChart.birthTime == nil {
+                HStack(spacing: 5) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 10))
+                    Text("No birth time was recorded during onboarding — adding one improves chart accuracy.")
+                        .font(SynergyFont.body(11))
+                        .lineSpacing(2)
+                }
+                .foregroundColor(.cosmicMuted)
+            }
+        }
+    }
+
     private var bioSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("BIO", systemImage: "text.alignleft")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: Radius.md)
                     .fill(Color.cosmicDarkAlt)
@@ -1000,7 +1153,6 @@ struct EditProfileSheet: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Label("VIBE WORDS (up to 3)", systemImage: "tag")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan)
 
             // Zodiac-based suggestion chips
             if currentVibeWords.count < 3 {
@@ -1052,7 +1204,6 @@ struct EditProfileSheet: View {
             HStack {
                 Label("PROMPTS (up to 3)", systemImage: "quote.bubble")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan)
                 Spacer()
                 if prompts.count < 3 {
                     Button {
@@ -1121,7 +1272,7 @@ struct EditProfileSheet: View {
             HStack {
                 Text(prompts[index].question.uppercased())
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundColor(.cosmicCyan)
+                    .foregroundColor(.cosmicMuted)
                     .kerning(0.5)
                     .lineLimit(1)
                 Spacer()
@@ -1183,7 +1334,7 @@ struct EditProfileSheet: View {
 
     private func saveAndDismiss() {
         let words = [vibeWord1, vibeWord2, vibeWord3]
-        vm.saveProfile(bio: bio, vibeWords: words, prompts: prompts)
+        vm.saveProfile(bio: bio, vibeWords: words, prompts: prompts, photos: photoSlots)
         dismiss()
     }
 }

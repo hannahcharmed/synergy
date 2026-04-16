@@ -84,21 +84,22 @@ struct MatchScorePill: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
+            Text("\(score)")
+                .font(SynergyFont.headline(15))
+                .foregroundColor(color)
             if showLabel {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 10, weight: .semibold))
+                Text("MATCH")
+                    .font(.system(size: 7, weight: .bold, design: .monospaced))
+                    .foregroundColor(color.opacity(0.65))
+                    .kerning(0.5)
             }
-            Text("\(score)%")
-                .font(SynergyFont.headlineMedium(13))
         }
-        .foregroundColor(color)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(color.opacity(0.15))
+        .background(color.opacity(0.12))
         .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(color.opacity(0.4), lineWidth: 1))
-        .cosmicGlow(color: color, radius: score >= 85 ? 6 : 0)
+        .overlay(Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 }
 

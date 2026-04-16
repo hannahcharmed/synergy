@@ -1,11 +1,15 @@
 import SwiftUI
 import Combine
+import UserNotifications
 
 // MARK: - App Coordinator
 // Top-level navigation state machine. Controls onboarding → main app flow.
 
 final class AppCoordinator: ObservableObject {
     @Published var state: AppState = .loading
+
+    /// Holds a strong reference so UNUserNotificationCenter (which only holds weak) doesn't lose it.
+    let notificationDelegate = SynergyNotificationDelegate()
 
     enum AppState {
         case loading
@@ -14,6 +18,8 @@ final class AppCoordinator: ObservableObject {
     }
 
     init() {
+        UNUserNotificationCenter.current().delegate = notificationDelegate
+
         // In production, check Keychain for valid session token
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             // Check if user has completed onboarding
