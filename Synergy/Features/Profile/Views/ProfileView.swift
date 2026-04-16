@@ -1012,7 +1012,8 @@ struct EditProfileSheet: View {
             // Remove badge
             Button {
                 withAnimation(.spring(response: 0.3)) {
-                    photoSlots.remove(at: index)
+                    let i = index
+                    photoSlots = photoSlots.enumerated().compactMap { $0.offset == i ? nil : $0.element }
                 }
             } label: {
                 ZStack {
@@ -1277,7 +1278,8 @@ struct EditProfileSheet: View {
                     .lineLimit(1)
                 Spacer()
                 Button {
-                    prompts.remove(at: index)
+                    let targetId = prompts[index].id
+                    prompts.removeAll { $0.id == targetId }
                 } label: {
                     Image(systemName: "xmark.circle")
                         .foregroundColor(.cosmicMuted)
