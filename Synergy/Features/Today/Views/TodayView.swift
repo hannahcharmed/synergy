@@ -62,6 +62,11 @@ struct TodayView: View {
             alignedMatchesSection
         }
 
+        // Weekly synastry report (right after aligned matches)
+        if !vm.weeklyReport.isEmpty {
+            weeklyReportCard
+        }
+
         if let h = vm.horoscope {
             cosmicWeatherBanner(h)
             horoscopeCard(h)
@@ -70,11 +75,6 @@ struct TodayView: View {
         // Cosmic streak
         if vm.streakDays >= 2 {
             streakCard
-        }
-
-        // Weekly synastry report button
-        if !vm.weeklyReport.isEmpty {
-            weeklyReportCard
         }
 
         if !vm.activeRituals.isEmpty {

@@ -6,6 +6,7 @@ struct FeedView: View {
     @EnvironmentObject var vm: FeedViewModel
     @State private var showSynastrySheet = false
     @State private var showDiscoverySettings = false
+    @State private var selectedProfileItem: FeedItem? = nil
 
     var body: some View {
         // iOS 15: NavigationView + .navigationViewStyle(.stack)
@@ -30,6 +31,9 @@ struct FeedView: View {
             }
             .sheet(item: $vm.selectedItem) { item in
                 SynastryDetailSheet(item: item)
+            }
+            .sheet(item: $selectedProfileItem) { item in
+                MatchProfileSheet(item: item, onViewSynastry: { vm.selectedItem = item })
             }
             .sheet(isPresented: $showDiscoverySettings) {
                 DiscoverySettingsSheet()
@@ -93,7 +97,8 @@ struct FeedView: View {
                     isTop: isTop,
                     onLike: { vm.like(item) },
                     onPass: { vm.pass(item) },
-                    onTap: isTop ? { vm.selectedItem = item } : nil
+                    onTap: isTop ? { selectedProfileItem = item } : nil,
+                    onSynastry: isTop ? { vm.selectedItem = item } : nil
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, Spacing.xl)
@@ -350,9 +355,9 @@ struct SynastryDetailSheet: View {
                         scoreHeader
                         compositeWheelSection
                         radarSection
+                        aspectGridSection
                         layersSection
                         relationshipDomainsSection
-                        aspectGridSection
                         icebreakerSection
                     }
                     .padding(Spacing.xl)
@@ -766,6 +771,258 @@ struct SynastryDetailSheet: View {
     }
 }
 
+// MARK: - Match Profile Sheet
+
+struct MatchProfileSheet: View {
+    let item: FeedItem
+    var onViewSynastry: (() -> Void)? = nil
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.cosmicDark.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            photoSection
+                            infoSection
+                                .padding(Spacing.xl)
+                        }
+                        .padding(.bottom, 120)
+                    }
+                    actionBar
+                }
+            }
+            .navigationBarHidden(true)
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    // MARK: - Photo area
+
+    private var photoSection: some View {
+        ZStack(alignment: .bottom) {
+            LinearGradient(
+                colors: elementGradient,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: 340)
+            .overlay(
+                Text(item.user.displayName.prefix(1))
+                    .font(SynergyFont.headline(110))
+                    .foregroundColor(.white.opacity(0.1))
+            )
+
+            LinearGradient(
+                colors: [.clear, Color.cosmicDark],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            .frame(height: 340)
+
+            // Dismiss + synastry quick buttons
+            VStack {
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Color.black.opacity(0.4))
+                            .clipShape(Circle())
+                    }
+                    Spacer()
+                    Button { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onViewSynastry?() } } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "arrow.up.right.circle.fill").font(.system(size: 12))
+                            Text("Synastry").font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        }
+                        .foregroundColor(.cosmicCyan)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Color.black.opacity(0.4))
+                        .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, Spacing.xl)
+                .padding(.top, Spacing.md)
+                Spacer()
+            }
+            .frame(height: 340)
+        }
+    }
+
+    private var elementGradient: [Color] {
+        switch item.user.birthChart.sunSign.element {
+        case .fire:  return [Color(hex: "#2D1B1B"), Color(hex: "#3D2612")]
+        case .earth: return [Color(hex: "#1A2D1A"), Color(hex: "#1E2D1A")]
+        case .air:   return [Color(hex: "#1A1E2D"), Color(hex: "#162030")]
+        case .water: return [Color(hex: "#16181F"), Color(hex: "#1A1328")]
+        }
+    }
+
+    // MARK: - Info
+
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
+            // Name + score + basics
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("\(item.user.displayName), \(item.user.age)")
+                        .font(SynergyFont.headline(28))
+                        .foregroundColor(.cosmicNeutral)
+                    if item.user.isVerified {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.cosmicCyan)
+                    }
+                    Spacer()
+                    MatchScorePill(score: item.cosmicScore)
+                }
+                HStack(spacing: 6) {
+                    Text("\(item.user.birthChart.sunSign.symbol) \(item.user.birthChart.sunSign.rawValue)")
+                    Text("·")
+                    Text("\(item.user.birthChart.risingSign.rawValue) rising")
+                    if let dist = item.user.distanceMiles {
+                        Text("· \(String(format: "%.0f", dist)) mi")
+                    }
+                }
+                .font(SynergyFont.body(13))
+                .foregroundColor(.cosmicMuted)
+            }
+
+            // Vibe words
+            if !item.user.profile.vibeWords.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(item.user.profile.vibeWords, id: \.self) { word in
+                        Text(word)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.65))
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(Color.white.opacity(0.07)).clipShape(Capsule())
+                    }
+                }
+            }
+
+            // Transit boost
+            if let boost = item.transitBoost {
+                HStack(spacing: 5) {
+                    Image(systemName: "arrow.up.right.circle.fill").font(.system(size: 10))
+                    Text(boost.description).font(SynergyFont.body(11))
+                }
+                .foregroundColor(Color(hex: "#00F0FF"))
+                .padding(.horizontal, 9).padding(.vertical, 4)
+                .background(Color(hex: "#00F0FF").opacity(0.10)).clipShape(Capsule())
+            }
+
+            // All prompts (Hinge-style)
+            if !item.user.profile.prompts.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(item.user.profile.prompts.indices, id: \.self) { idx in
+                        if idx > 0 { Divider().overlay(Color.cosmicBorder.opacity(0.4)) }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(item.user.profile.prompts[idx].question.uppercased())
+                                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                .foregroundColor(.cosmicMuted)
+                                .kerning(0.5)
+                            Text("\u{201C}\(item.user.profile.prompts[idx].answer)\u{201D}")
+                                .font(SynergyFont.body(15))
+                                .foregroundColor(.cosmicNeutral)
+                                .lineSpacing(4)
+                        }
+                        .padding(.vertical, Spacing.md)
+                    }
+                }
+                .padding(Spacing.lg)
+                .cosmicCard()
+            }
+
+            // Chart big three
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                Text("NATAL_CHART").systemLabel()
+                HStack(spacing: 0) {
+                    chartItem("☉", label: "Sun",    value: item.user.birthChart.sunSign.rawValue)
+                    Divider().overlay(Color.cosmicBorder).frame(height: 40)
+                    chartItem("☽", label: "Moon",   value: item.user.birthChart.moonSign.rawValue)
+                    Divider().overlay(Color.cosmicBorder).frame(height: 40)
+                    chartItem("AC", label: "Rising", value: item.user.birthChart.risingSign.rawValue)
+                }
+                .padding(.vertical, Spacing.sm)
+            }
+            .padding(Spacing.lg)
+            .cosmicCard()
+        }
+    }
+
+    private func chartItem(_ symbol: String, label: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(symbol).font(.system(size: 18)).foregroundColor(.cosmicCyan)
+            Text(value).font(SynergyFont.headlineMedium(13)).foregroundColor(.cosmicNeutral)
+            Text(label.uppercased()).systemLabel()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Action bar
+
+    private var actionBar: some View {
+        VStack(spacing: 0) {
+            Divider().overlay(Color.cosmicBorder)
+            HStack(spacing: Spacing.xl) {
+                Button { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { /* pass handled via deck */ } } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.cosmicError)
+                            .frame(width: 58, height: 58)
+                            .background(Color.cosmicCard)
+                            .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(Color.cosmicError.opacity(0.35), lineWidth: 1.5))
+                        Text("PASS").font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundColor(.cosmicError.opacity(0.7)).kerning(1)
+                    }
+                }.buttonStyle(.plain)
+
+                Button {
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onViewSynastry?() }
+                } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(LinearGradient.cosmicGradient)
+                            .frame(width: 52, height: 52)
+                            .background(Color.cosmicCard)
+                            .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(Color.cosmicPurple.opacity(0.4), lineWidth: 1.5))
+                        Text("SYNASTRY").font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(LinearGradient.cosmicGradient).kerning(1)
+                    }
+                }.buttonStyle(.plain)
+
+                Button { dismiss() } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.cosmicCyan)
+                            .frame(width: 58, height: 58)
+                            .background(Color.cosmicCard)
+                            .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(Color.cosmicCyan.opacity(0.35), lineWidth: 1.5))
+                        Text("LIKE").font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundColor(.cosmicCyan.opacity(0.7)).kerning(1)
+                    }
+                }.buttonStyle(.plain)
+            }
+            .padding(.vertical, Spacing.lg)
+            .padding(.horizontal, Spacing.xxxl)
+            .background(Color.cosmicDark)
+        }
+    }
+}
+
 // MARK: - Radar Chart (appended here so Xcode project can find it)
 
 private struct RadarChartView: View {
@@ -911,7 +1168,7 @@ private struct SynastryCompositeWheelView: View {
     private let matchDotR: CGFloat = 73  // match planet orbit
     private let userDotR: CGFloat  = 55  // current-user planet orbit
 
-    private let zodiacGlyphs = ["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"]
+    private let zodiacGlyphs = ["♈\u{FE0E}","♉\u{FE0E}","♊\u{FE0E}","♋\u{FE0E}","♌\u{FE0E}","♍\u{FE0E}","♎\u{FE0E}","♏\u{FE0E}","♐\u{FE0E}","♑\u{FE0E}","♒\u{FE0E}","♓\u{FE0E}"]
     private let personalPlanets: [Planet] = [.sun, .moon, .venus, .mars, .mercury, .ascendant]
 
     private var half: CGFloat { size / 2 }
@@ -931,8 +1188,8 @@ private struct SynastryCompositeWheelView: View {
                 let a = segMidAngle(i)
                 let r = (outerR + innerR) / 2
                 Text(zodiacGlyphs[i])
-                    .font(.system(size: 9))
-                    .foregroundColor(.cosmicMuted.opacity(0.7))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.cosmicNeutral.opacity(0.75))
                     .position(x: half + r * cos(a), y: half + r * sin(a))
             }
 

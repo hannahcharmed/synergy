@@ -113,7 +113,6 @@ struct ChartRevealView: View {
         VStack(spacing: Spacing.sm) {
             Text("02 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
 
             Text("Your birth chart")
                 .font(SynergyFont.headline(30))
@@ -178,12 +177,8 @@ struct ChartRevealView: View {
     private func narrationCard(chart: BirthChart) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12))
-                    .foregroundColor(.cosmicCyan)
                 Text("PLANET_INSIGHTS")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan.opacity(0.8))
                 Spacer()
                 Text("AI · \(chart.sunSign.rawValue)")
                     .systemLabel()
@@ -241,12 +236,8 @@ struct ChartRevealView: View {
     private func placementsSection(chart: BirthChart) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
-                Image(systemName: "list.star")
-                    .font(.system(size: 11))
-                    .foregroundColor(.cosmicCyan)
                 Text("CHART_BREAKDOWN")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan.opacity(0.8))
                 Spacer()
                 Text("TAP TO EXPLORE")
                     .systemLabel()
@@ -502,12 +493,8 @@ struct PlacementDetailSheet: View {
     private var interpretationCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 11))
-                    .foregroundColor(.cosmicCyan)
                 Text("PLANET_INSIGHTS")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan.opacity(0.8))
             }
 
             Text(placementInterpretation)
@@ -529,7 +516,6 @@ struct PlacementDetailSheet: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("KEY_ASPECTS")
                     .systemLabel()
-                    .foregroundColor(.cosmicCyan.opacity(0.8))
 
                 ForEach(aspects, id: \.self) { aspect in
                     HStack(spacing: Spacing.sm) {
@@ -685,22 +671,18 @@ struct PlanetDot: View {
     let sign: ZodiacSign
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text(planet.symbol)
-                .font(.system(size: planet == .sun || planet == .moon ? 14 : 11))
-                .foregroundColor(dotColor)
-
-            Text(sign.symbol)
-                .font(.system(size: 8))
-                .foregroundColor(.cosmicMuted)
-        }
-        .frame(width: 24, height: 24)
-        .background(
+        ZStack {
             Circle()
-                .fill(Color.cosmicDark.opacity(0.9))
-                .overlay(Circle().strokeBorder(dotColor.opacity(0.5), lineWidth: 1))
-        )
-        .cosmicGlow(color: dotColor, radius: planet == .venus || planet == .moon ? 6 : 0)
+                .fill(dotColor.opacity(0.15))
+                .frame(width: 30, height: 30)
+            Circle()
+                .strokeBorder(dotColor.opacity(0.6), lineWidth: 1)
+                .frame(width: 30, height: 30)
+            Text(planet.symbol)
+                .font(.system(size: planet == .sun || planet == .moon ? 14 : 11, weight: .medium))
+                .foregroundColor(dotColor)
+        }
+        .cosmicGlow(color: dotColor, radius: planet == .sun || planet == .moon ? 8 : 0)
     }
 
     private var dotColor: Color {

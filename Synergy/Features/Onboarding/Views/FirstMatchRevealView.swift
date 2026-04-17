@@ -63,9 +63,8 @@ struct FirstMatchRevealView: View {
         VStack(spacing: Spacing.sm) {
             Text("07 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
 
-            Text("Your top match ✦")
+            Text("Your top match")
                 .font(SynergyFont.headline(30))
                 .foregroundColor(.cosmicNeutral)
         }
@@ -120,7 +119,7 @@ struct FirstMatchRevealView: View {
                                 .foregroundColor(.cosmicMuted)
 
                             if let dist = match.user.distanceMiles {
-                                Text("· \(String(format: "%.1f", dist)) mi")
+                                Text("· \(String(format: "%.0f", dist)) mi")
                                     .font(SynergyFont.body(13))
                                     .foregroundColor(.cosmicMuted)
                             }
@@ -129,7 +128,7 @@ struct FirstMatchRevealView: View {
 
                     Spacer()
 
-                    MatchScoreBadge(score: match.cosmicScore, size: .medium)
+                    MatchScorePill(score: match.cosmicScore)
                         .opacity(scoreOpacity)
                 }
 

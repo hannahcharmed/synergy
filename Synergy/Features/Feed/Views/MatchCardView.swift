@@ -8,7 +8,8 @@ struct MatchCardView: View {
     let isTop: Bool
     var onLike: (() -> Void)? = nil
     var onPass: (() -> Void)? = nil
-    var onTap: (() -> Void)? = nil
+    var onTap: (() -> Void)? = nil      // opens full profile
+    var onSynastry: (() -> Void)? = nil // swipe-up shortcut to synastry
 
     @State private var dragOffset: CGSize = .zero
     @State private var dragAngle: Double = 0
@@ -351,7 +352,7 @@ struct MatchCardView: View {
                         synastryHintOpacity = 0
                         dragOffset = .zero
                     }
-                    onTap?()   // opens synastry sheet
+                    onSynastry?()   // swipe-up shortcut to synastry
                 } else if w > swipeThreshold {
                     synastryHintOpacity = 0
                     swipeOff(direction: .like)

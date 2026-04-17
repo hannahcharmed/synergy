@@ -44,21 +44,26 @@ struct WelcomeView: View {
     // MARK: - Logo
 
     private var logoSection: some View {
-        VStack(spacing: Spacing.lg) {
-            // Orbital rings + ✦ mark
+        VStack(spacing: Spacing.xl) {
+            // Single pulsing mark — Co-Star minimal style
             ZStack {
-                OrbitalRingView(diameter: 140)
-                OrbitalRingView(diameter: 100, dashed: true)
+                Circle()
+                    .stroke(Color.cosmicCyan.opacity(glowPulse ? 0.15 : 0.05), lineWidth: 1)
+                    .frame(width: 120, height: 120)
+                    .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: glowPulse)
 
-                Text("✦")
-                    .font(.system(size: 40))
-                    .foregroundColor(.cosmicCyan)
-                    .cosmicGlow(color: .cosmicCyan, radius: glowPulse ? 24 : 12)
-                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: glowPulse)
+                Circle()
+                    .stroke(Color.cosmicCyan.opacity(glowPulse ? 0.08 : 0.03), lineWidth: 1)
+                    .frame(width: 80, height: 80)
+                    .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true).delay(0.3), value: glowPulse)
+
+                Image(systemName: "moon.stars.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(LinearGradient.cosmicGradient)
             }
-            .frame(width: 160, height: 160)
+            .frame(width: 140, height: 140)
             .scaleEffect(logoScale)
-            .animation(.spring(response: 1.0, dampingFraction: 0.6), value: logoScale)
+            .animation(.spring(response: 1.2, dampingFraction: 0.7), value: logoScale)
 
             // Wordmark
             Text("SYNERGY")
@@ -92,11 +97,10 @@ struct WelcomeView: View {
 
     private var ctaSection: some View {
         VStack(spacing: Spacing.md) {
-            CosmicButton("Begin my chart ✦", variant: .gradient) {
+            CosmicButton("Begin my chart", variant: .gradient) {
                 vm.advance()
             }
             .opacity(ctaOpacity)
-            .cosmicGlow(color: .cosmicPurple, radius: 20)
 
             Button("Sign in instead") {
                 // Navigate to sign in (future)

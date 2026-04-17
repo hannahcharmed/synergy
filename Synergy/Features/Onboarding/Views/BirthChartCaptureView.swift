@@ -38,7 +38,7 @@ struct BirthChartCaptureView: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("01 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
+                
 
             Text("Your birth chart")
                 .font(SynergyFont.headline(30))
