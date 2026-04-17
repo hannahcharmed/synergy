@@ -41,7 +41,7 @@ struct NotificationOptInView: View {
             // Sequence label
             Text("06 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
+                
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .opacity(appeared ? 1 : 0)
 

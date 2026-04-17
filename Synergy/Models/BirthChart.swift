@@ -17,19 +17,20 @@ enum ZodiacSign: String, Codable, CaseIterable {
     case pisces = "Pisces"
 
     var symbol: String {
+        // \u{FE0E} = VS15 text variation selector — forces text glyph, not emoji rendering
         switch self {
-        case .aries:       return "♈"
-        case .taurus:      return "♉"
-        case .gemini:      return "♊"
-        case .cancer:      return "♋"
-        case .leo:         return "♌"
-        case .virgo:       return "♍"
-        case .libra:       return "♎"
-        case .scorpio:     return "♏"
-        case .sagittarius: return "♐"
-        case .capricorn:   return "♑"
-        case .aquarius:    return "♒"
-        case .pisces:      return "♓"
+        case .aries:       return "♈\u{FE0E}"
+        case .taurus:      return "♉\u{FE0E}"
+        case .gemini:      return "♊\u{FE0E}"
+        case .cancer:      return "♋\u{FE0E}"
+        case .leo:         return "♌\u{FE0E}"
+        case .virgo:       return "♍\u{FE0E}"
+        case .libra:       return "♎\u{FE0E}"
+        case .scorpio:     return "♏\u{FE0E}"
+        case .sagittarius: return "♐\u{FE0E}"
+        case .capricorn:   return "♑\u{FE0E}"
+        case .aquarius:    return "♒\u{FE0E}"
+        case .pisces:      return "♓\u{FE0E}"
         }
     }
 

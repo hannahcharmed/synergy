@@ -9,9 +9,8 @@ struct OnboardingContainerView: View {
 
     var body: some View {
         ZStack {
-            // Persistent star background
-            StarParticleView(count: 60)
-                .ignoresSafeArea()
+            // Co-Star style: pure black canvas
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top bar: back + progress
@@ -120,6 +119,7 @@ struct OnboardingDiscoveryView: View {
     @State private var minAge: Double = 22
     @State private var maxAge: Double = 35
     @State private var selectedGenders: Set<String> = ["Everyone"]
+    @State private var minCosmicScore: Double = 60
 
     private let genderOptions = ["Women", "Men", "Non-binary", "Everyone"]
 
@@ -198,6 +198,30 @@ struct OnboardingDiscoveryView: View {
                     }
                 }
 
+                // Cosmic compatibility threshold
+                settingGroup(title: "MIN_COMPATIBILITY") {
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        HStack {
+                            Text("Minimum match score")
+                                .font(SynergyFont.body(15))
+                                .foregroundColor(.cosmicNeutral)
+                            Spacer()
+                            Text("\(Int(minCosmicScore))%+")
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundColor(discScoreColor)
+                                .padding(.horizontal, 8).padding(.vertical, 3)
+                                .background(discScoreColor.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                        Slider(value: $minCosmicScore, in: 0...95, step: 5)
+                            .tint(.cosmicCyan)
+                        Text(discScoreDescription)
+                            .font(SynergyFont.body(12))
+                            .foregroundColor(.cosmicMuted)
+                            .lineSpacing(2)
+                    }
+                }
+
                 CosmicButton("Looks good", variant: .gradient) {
                     vm.advance()
                 }
@@ -208,11 +232,24 @@ struct OnboardingDiscoveryView: View {
         }
     }
 
+    private var discScoreColor: Color {
+        minCosmicScore >= 80 ? .cosmicCyan : minCosmicScore >= 60 ? .cosmicPurple : .cosmicMuted
+    }
+
+    private var discScoreDescription: String {
+        switch Int(minCosmicScore) {
+        case 0..<30:  return "Show everyone — no cosmic filter applied."
+        case 30..<60: return "Light filter — most profiles will appear."
+        case 60..<80: return "Balanced — only meaningful astrological alignment."
+        case 80..<90: return "High bar — strong synastry matches only."
+        default:      return "Strict — only rare, highly aligned connections."
+        }
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("05 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
             Text("Who you'd like to meet")
                 .font(SynergyFont.headline(30))
                 .foregroundColor(.cosmicNeutral)

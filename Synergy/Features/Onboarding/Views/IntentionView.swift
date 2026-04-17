@@ -54,7 +54,7 @@ struct IntentionView: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("03 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
+                
 
             Text("What are you\ncalling in?")
                 .font(SynergyFont.headline(30))

@@ -89,7 +89,7 @@ struct ProfileSetupView: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("04 / 07")
                 .systemLabel()
-                .foregroundColor(.cosmicCyan.opacity(0.8))
+                
 
             Text("Your profile")
                 .font(SynergyFont.headline(30))
