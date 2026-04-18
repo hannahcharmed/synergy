@@ -33,7 +33,7 @@ struct FeedView: View {
                 SynastryDetailSheet(item: item)
             }
             .sheet(item: $selectedProfileItem) { item in
-                MatchProfileSheet(item: item, onViewSynastry: { vm.selectedItem = item })
+                FeedMatchProfileSheet(item: item, onViewSynastry: { vm.selectedItem = item })
             }
             .sheet(isPresented: $showDiscoverySettings) {
                 DiscoverySettingsSheet()
@@ -771,9 +771,9 @@ struct SynastryDetailSheet: View {
     }
 }
 
-// MARK: - Match Profile Sheet
+// MARK: - Feed Match Profile Sheet (FeedItem-based; distinct from chat MatchProfileSheet which takes User)
 
-struct MatchProfileSheet: View {
+struct FeedMatchProfileSheet: View {
     let item: FeedItem
     var onViewSynastry: (() -> Void)? = nil
     @Environment(\.dismiss) var dismiss
@@ -998,7 +998,8 @@ struct MatchProfileSheet: View {
                             .clipShape(Circle())
                             .overlay(Circle().strokeBorder(Color.cosmicPurple.opacity(0.4), lineWidth: 1.5))
                         Text("SYNASTRY").font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundStyle(LinearGradient.cosmicGradient).kerning(1)
+                            .kerning(1)
+                            .foregroundStyle(LinearGradient.cosmicGradient)
                     }
                 }.buttonStyle(.plain)
 
